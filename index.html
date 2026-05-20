@@ -1071,11 +1071,6 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 .fb-ch-create-inp{width:calc(100% - 24px);box-sizing:border-box;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:5px 8px;color:var(--text);font-size:12px;font-family:var(--font-body);margin:3px 12px 4px;display:none}
 .fb-ch-create-inp.visible{display:block}
 .fb-ch-create-inp:focus{border-color:var(--gold);outline:none}
-/* Sync selector */
-.fb-sync-row{display:flex;align-items:center;gap:6px;padding:8px 12px 4px}
-.fb-sync-lbl{font-size:10px;color:#3e3e52;white-space:nowrap;letter-spacing:.5px}
-.fb-sync-sel{flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.07);border-radius:5px;padding:3px 5px;color:#888;font-size:11px;font-family:var(--font-body);cursor:pointer;min-width:0}
-.fb-sync-sel:focus{border-color:var(--gold);outline:none}
 /* Member section */
 .fb-mbr-section-hdr{display:flex;align-items:center;padding:12px 12px 3px;cursor:pointer;user-select:none}
 .fb-mbr-sec-lbl{flex:1;font-size:10px;font-weight:700;color:#3e3e52;text-transform:uppercase;letter-spacing:1.8px;transition:color .15s}
@@ -1199,6 +1194,31 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
   .ca-dmg-result-card.showing,.sk-result-card,.sk-result-grade,
   .dice-result-anim{animation:none!important;transition:none!important}
 }
+/* ===== Firebase channel / member new styles ===== */
+/* Protected channel badge */
+.fb-ch-protected{font-size:9px;color:var(--dim);margin-left:3px;opacity:.6}
+/* History filter pills */
+.hist-filter-row{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px 4px;border-bottom:1px solid var(--border)}
+.hist-filter-pill{font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:background .15s,color .15s}
+.hist-filter-pill:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.hist-filter-pill.active{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gold)}
+/* Channel color dot in history */
+.hist-ch-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle;flex-shrink:0}
+/* Member info layout */
+.fb-mbr-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;transition:background .15s}
+.fb-mbr-item:hover{background:rgba(255,255,255,.04)}
+.fb-mbr-avatar{width:28px;height:28px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;overflow:hidden}
+.fb-mbr-avatar img{width:100%;height:100%;object-fit:cover}
+.fb-mbr-info{flex:1;min-width:0}
+.fb-mbr-charname{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.fb-mbr-playerid{font-size:10px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.fb-mbr-kp-badge{font-size:9px;background:rgba(201,168,76,.18);color:var(--gold);border:1px solid rgba(201,168,76,.35);border-radius:4px;padding:1px 5px;font-weight:700;letter-spacing:.5px;flex-shrink:0}
+.fb-mbr-bars{display:flex;flex-direction:column;gap:2px;min-width:40px}
+.fb-mbr-bar-row{display:flex;align-items:center;gap:3px;font-size:9px;color:var(--dim)}
+.fb-mbr-bar-track{flex:1;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.fb-mbr-bar-fill{height:100%;border-radius:2px;transition:width .3s}
+.fb-mbr-bar-fill.hp{background:var(--green)}
+.fb-mbr-bar-fill.san{background:#3b82f6}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -1266,12 +1286,7 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
           </div>
           <input class="fb-ch-create-inp" id="fbNewChInput" placeholder="频道名，回车确认..." maxlength="16">
           <div id="fbChList"></div>
-          <div class="fb-sync-row">
-            <span class="fb-sync-lbl">同步投掷→</span>
-            <select class="fb-sync-sel" id="fbSendSel">
-              <option value="">不同步</option>
-            </select>
-          </div>
+
         </div>
         <!-- Member list: shown when connected -->
         <div class="hidden" id="fbMbrSection">
@@ -2050,15 +2065,40 @@ function renderHistory(){
   const el=document.getElementById('histList');
   if(!el)return;
   const raw=S.getHist();
-  if(!raw.length){el.innerHTML='<div class="hist-empty">暂无投掷历史</div>';return;}
-  // raw is newest-first; reverse to show chronological (oldest top, newest bottom)
-  const h=[...raw].reverse();
+  // KP channel filter pills (only when in a room as KP)
+  const histTab=document.getElementById('tab-history');
+  if(histTab){
+    let filterRow=histTab.querySelector('.hist-filter-row');
+    if(FB.isKP&&FB.roomId){
+      const chIds=Object.keys(FB.channelList);
+      if(chIds.length>1){
+        if(!filterRow){filterRow=document.createElement('div');filterRow.className='hist-filter-row';histTab.prepend(filterRow);}
+        const active=FB._histFilterCh;
+        filterRow.innerHTML=`<button class="hist-filter-pill${!active?' active':''}" data-ch="">全部</button>`+
+          chIds.sort((a,b)=>a==='general'?-1:b==='general'?1:a.localeCompare(b)).map(id=>{
+            const meta=FB.channelList[id]||{displayName:id};
+            const dot=`<span class="hist-ch-dot" style="background:${_chColor(id)}"></span>`;
+            return`<button class="hist-filter-pill${active===id?' active':''}" data-ch="${esc(id)}">${dot}${esc(meta.displayName||id)}</button>`;
+          }).join('');
+        filterRow.querySelectorAll('.hist-filter-pill').forEach(pill=>{
+          pill.addEventListener('click',()=>{
+            FB._histFilterCh=pill.dataset.ch;
+            renderHistory();
+          });
+        });
+      }else if(filterRow){filterRow.remove();}
+    }else if(filterRow){filterRow.remove();}
+  }
+  // Apply channel filter for KP
+  const filterCh=FB.isKP?FB._histFilterCh:'';
+  const filtered=filterCh?raw.filter(e=>e.channel===filterCh):raw;
+  if(!filtered.length){el.innerHTML='<div class="hist-empty">暂无投掷历史</div>';return;}
+  const h=[...filtered].reverse();
   const myCharId=App.char?App.char.id:'';
   let html='';
   let lastTs=0;
   for(const e of h){
     const ts=e.ts||Date.now();
-    // Time separator when gap > 5 min
     if(lastTs&&(ts-lastTs)>5*60*1000){
       const midTs=(lastTs+ts)/2;
       const d=new Date(midTs);
@@ -2071,15 +2111,20 @@ function renderHistory(){
     const color=_histColor(cid);
     const isSelf=cid===myCharId&&!e.fromFB;
     const timeStr=new Date(ts).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
-    // Dice tags
     const diceArr=Array.isArray(e.dice)?e.dice:(e.dice?[e.dice]:[]);
     const diceHtml=diceArr.length?`<div class="hist-msg-dice">${diceArr.map(d=>`<span class="hist-die">${esc(String(d))}</span>`).join('')}</div>`:'';
-    // Individual result dice
     const results=e.results||[];
     const resHtml=results.length?results.map(r=>`<span class="hist-result-die">${Array.isArray(r)?r.join('|'):r}</span>`).join(''):'';
     const gradeHtml=e.grade?`<span class="hist-grade ${histGradeCls(e.grade)}">${esc(e.grade)}</span>`:'';
     const totalHtml=(e.total!==undefined&&e.total!==null)?`<span class="hist-msg-total">= ${e.total}</span>`:'';
-    const chHtml=e.channel?`<span class="hist-msg-ch"># ${esc(e.channel)}</span>`:'';
+    // Channel tag: show colored dot for KP multi-channel view
+    let chHtml='';
+    if(e.channel){
+      const chMeta=FB.channelList[e.channel];
+      const chLabel=chMeta?.displayName||e.channel;
+      const dotStyle=`background:${_chColor(e.channel)}`;
+      chHtml=`<span class="hist-msg-ch"><span class="hist-ch-dot" style="${dotStyle}"></span>${esc(chLabel)}</span>`;
+    }
     html+=`<div class="hist-msg${isSelf?' hist-self':''}">
       <div class="hist-msg-avatar" style="background:${color}">${esc(cname[0]||'?')}</div>
       <div class="hist-msg-body">
@@ -2095,7 +2140,6 @@ function renderHistory(){
     </div>`;
   }
   el.innerHTML=html;
-  // Auto-scroll to bottom (newest message)
   const scrollEl=el.closest('.tab-scroll');
   if(scrollEl)requestAnimationFrame(()=>{scrollEl.scrollTop=scrollEl.scrollHeight;});
 }
@@ -3568,9 +3612,18 @@ const firebaseConfig={
   appId:"1:682335487951:web:9d24804bee8bfec4b5f4ba"
 };
 
+const DEFAULT_CHANNELS=[
+  {id:'general',displayName:'综合',protected:true},
+  {id:'team-a',displayName:'A队',protected:false},
+  {id:'team-b',displayName:'B队',protected:false},
+];
+const CH_COLORS={general:'#c9a84c','team-a':'#27ae60','team-b':'#2980b9'};
+function _chColor(id){return CH_COLORS[id]||'#8e44ad';}
+
 const FB={
   db:null, roomId:null, playerName:null, isKP:false,
   activeCh:'general', channels:{}, members:{},
+  channelList:{}, _kpChListeners:{}, _histFilterCh:'',
   _listeners:[], _rollRef:null, _rollListener:null,
   _playerRef:null, _hostRef:null, _membersCollapsed:false,
 
@@ -3599,13 +3652,28 @@ const FB={
       }else{
         this.isKP=false;
       }
-      // Register player presence
+      // Register player presence (include characterName for member list)
       this._playerRef=this.db.ref(`rooms/${this.roomId}/players/${this.playerName}`);
-      await this._playerRef.set({online:true,ts:Date.now(),isKP:this.isKP,char:this._charSnapshot()});
+      const charSnap=this._charSnapshot();
+      await this._playerRef.set({online:true,ts:Date.now(),isKP:this.isKP,char:charSnap,
+        characterName:charSnap&&charSnap.name?charSnap.name:''});
       this._playerRef.onDisconnect().remove();
-      // Ensure general channel exists
-      const genRef=this.db.ref(`rooms/${this.roomId}/channels/general`);
-      if(!(await genRef.once('value')).exists())await genRef.set({created:Date.now(),name:'general'});
+      // Ensure default channels exist (channelList metadata + channels data node)
+      const clRef=this.db.ref(`rooms/${this.roomId}/channelList`);
+      const clSnap=await clRef.once('value');
+      if(!clSnap.exists()){
+        const defaults={};
+        for(const c of DEFAULT_CHANNELS){
+          defaults[c.id]={displayName:c.displayName,protected:c.protected,created:Date.now()};
+        }
+        await clRef.set(defaults);
+      }
+      // Backward compat: ensure rolls nodes exist for default channels
+      for(const c of DEFAULT_CHANNELS){
+        const chRef=this.db.ref(`rooms/${this.roomId}/channels/${c.id}`);
+        if(!(await chRef.once('value')).exists())
+          await chRef.set({created:Date.now(),name:c.id});
+      }
       this._listenChannels();
       this._listenMembers();
       await this.setActiveCh('general');
@@ -3636,7 +3704,13 @@ const FB={
       try{this._rollRef.off('child_added',this._rollListener);}catch(e){}
       this._rollRef=null;this._rollListener=null;
     }
+    // Clean up KP per-channel listeners
+    for(const[ch,{ref,fn}]of Object.entries(this._kpChListeners)){
+      try{ref.off('child_added',fn);}catch(e){}
+    }
+    this._kpChListeners={};
     this.roomId=null;this.isKP=false;this.channels={};this.members={};
+    this.channelList={};this._histFilterCh='';
     this._updateUI(false);
     this._setDot('');
     const rn=document.getElementById('fbSbRoomName');
@@ -3646,49 +3720,53 @@ const FB={
     document.getElementById('fbSbKpTag')?.classList.add('hidden');
     const cl=document.getElementById('fbChList');if(cl)cl.innerHTML='';
     const ml=document.getElementById('fbMembersList');if(ml)ml.innerHTML='';
-    const sel=document.getElementById('fbSendSel');
-    if(sel)sel.innerHTML='<option value="">不同步</option>';
     this._updateChIndicator('');
   },
 
   async setActiveCh(chName){
     if(this._rollRef&&this._rollListener){
       try{this._rollRef.off('child_added',this._rollListener);}catch(e){}
+      this._rollRef=null;this._rollListener=null;
     }
     this.activeCh=chName;
-    this._rollRef=this.db.ref(`rooms/${this.roomId}/channels/${chName}/rolls`);
-    // Find last existing key so we only receive NEW rolls
-    const existing=await this._rollRef.once('value');
-    const lastKey=existing.exists()?Object.keys(existing.val()||{}).pop():null;
-    this._rollListener=this._rollRef.on('child_added',snap=>{
-      if(lastKey&&snap.key<=lastKey)return;
-      const d=snap.val();if(!d)return;
-      if(d.player===this.playerName)return;
-      S.pushHist({
-        ts:d.ts||Date.now(),
-        label:`[${d.player||'?'}] ${d.label||''}`,
-        dice:Array.isArray(d.dice)?d.dice:(d.dice?[d.dice]:[]),
-        results:d.results||[],
-        total:d.total||0,
-        charId:d.charId||d.player||'remote',
-        charName:d.charName||d.player||'远程玩家',
-        channel:chName,
-        fromFB:true,
+    // Non-KP: listen to active channel for incoming rolls
+    if(!this.isKP){
+      this._rollRef=this.db.ref(`rooms/${this.roomId}/channels/${chName}/rolls`);
+      const existing=await this._rollRef.once('value');
+      const lastKey=existing.exists()?Object.keys(existing.val()||{}).pop():null;
+      this._rollListener=this._rollRef.on('child_added',snap=>{
+        if(lastKey&&snap.key<=lastKey)return;
+        const d=snap.val();if(!d)return;
+        if(d.player===this.playerName)return;
+        S.pushHist({
+          ts:d.ts||Date.now(),
+          label:`[${d.player||'?'}] ${d.label||''}`,
+          dice:Array.isArray(d.dice)?d.dice:(d.dice?[d.dice]:[]),
+          results:d.results||[],
+          total:d.total||0,
+          charId:d.charId||d.player||'remote',
+          charName:d.charName||d.player||'远程玩家',
+          channel:chName,
+          fromFB:true,
+        });
+        renderHistory();
       });
-      renderHistory();
-    });
+    }
     this._renderChList();
-    this._updateChIndicator(chName);
+    const displayName=this.channelList[chName]?.displayName||chName;
+    this._updateChIndicator(displayName);
     const chEl=document.getElementById('fbSbCharCh');
-    if(chEl)chEl.textContent='# '+chName;
+    if(chEl)chEl.textContent='# '+displayName;
   },
 
   async createChannel(chName){
     if(!this.isKP||!this.roomId||!chName.trim())return;
-    const name=chName.trim().replace(/[^a-zA-Z0-9_一-龥-]/g,'').slice(0,16);
+    const name=chName.trim().replace(/[^a-zA-Z0-9_一-鿿㐀-䶿-]/g,'').slice(0,16);
     if(!name){this._toast('频道名含非法字符','error');return;}
     try{
       await this.db.ref(`rooms/${this.roomId}/channels/${name}`).set({created:Date.now(),name});
+      await this.db.ref(`rooms/${this.roomId}/channelList/${name}`)
+        .set({displayName:name,protected:false,created:Date.now()});
       await this.setActiveCh(name);
       this._toast('频道 #'+name+' 已创建','success');
     }catch(e){console.error('createChannel:',e);}
@@ -3696,19 +3774,24 @@ const FB={
 
   async deleteChannel(chName){
     if(!this.isKP||!this.roomId)return;
-    if(chName==='general'){this._toast('不能删除默认频道','error');return;}
+    const meta=this.channelList[chName];
+    if(meta&&meta.protected){this._toast('不能删除预设频道','error');return;}
     if(!confirm(`确认删除频道 #${chName}？`))return;
     try{
       await this.db.ref(`rooms/${this.roomId}/channels/${chName}`).remove();
+      await this.db.ref(`rooms/${this.roomId}/channelList/${chName}`).remove();
+      // Clean up KP listener for this channel
+      if(this._kpChListeners[chName]){
+        try{this._kpChListeners[chName].ref.off('child_added',this._kpChListeners[chName].fn);}catch(e){}
+        delete this._kpChListeners[chName];
+      }
       if(this.activeCh===chName)await this.setActiveCh('general');
     }catch(e){console.error('deleteChannel:',e);}
   },
 
   pushRoll(entry){
-    if(!this.roomId||!this.db)return;
-    const sel=document.getElementById('fbSendSel');
-    const ch=sel?sel.value:'';
-    if(!ch)return;
+    if(!this.roomId||!this.db||!this.activeCh)return;
+    const ch=this.activeCh;
     try{
       this.db.ref(`rooms/${this.roomId}/channels/${ch}/rolls`).push({
         ts:entry.ts||Date.now(),
@@ -3726,7 +3809,9 @@ const FB={
 
   syncPlayer(){
     if(!this._playerRef||!this.roomId)return;
-    try{this._playerRef.update({char:this._charSnapshot(),ts:Date.now(),isKP:this.isKP});}
+    const charSnap=this._charSnapshot();
+    try{this._playerRef.update({char:charSnap,ts:Date.now(),isKP:this.isKP,
+      characterName:charSnap&&charSnap.name?charSnap.name:''});}
     catch(e){}
   },
 
@@ -3740,13 +3825,63 @@ const FB={
   },
 
   _listenChannels(){
+    // Listen to channelList for metadata (display names, protected flag)
+    const clRef=this.db.ref(`rooms/${this.roomId}/channelList`);
+    const clFn=clRef.on('value',snap=>{
+      const raw=snap.val()||{};
+      this.channelList=raw;
+      // Backward compat: if channelList is empty, derive from channels
+      if(!Object.keys(raw).length){
+        Object.keys(this.channels).forEach(id=>{
+          this.channelList[id]={displayName:id,protected:id==='general',created:0};
+        });
+      }
+      this._renderChList();
+      if(this.isKP)this._listenAllRolls();
+    });
+    this._listeners.push({ref:clRef,type:'value',fn:clFn});
+    // Also listen to channels node for backward compat (rooms without channelList)
     const ref=this.db.ref(`rooms/${this.roomId}/channels`);
     const fn=ref.on('value',snap=>{
       this.channels=snap.val()||{};
-      this._renderChList();
-      this._renderSendSel();
+      if(!Object.keys(this.channelList).length){
+        Object.keys(this.channels).forEach(id=>{
+          this.channelList[id]={displayName:id,protected:id==='general',created:0};
+        });
+        this._renderChList();
+      }
     });
     this._listeners.push({ref,type:'value',fn});
+  },
+
+  _listenAllRolls(){
+    if(!this.isKP||!this.roomId)return;
+    const allChs=Object.keys(this.channels);
+    for(const chName of allChs){
+      if(this._kpChListeners[chName])continue; // already listening
+      const rollRef=this.db.ref(`rooms/${this.roomId}/channels/${chName}/rolls`);
+      rollRef.once('value').then(existing=>{
+        const lastKey=existing.exists()?Object.keys(existing.val()||{}).pop():null;
+        const rollFn=rollRef.on('child_added',snap=>{
+          if(lastKey&&snap.key<=lastKey)return;
+          const d=snap.val();if(!d)return;
+          if(d.player===this.playerName)return;
+          S.pushHist({
+            ts:d.ts||Date.now(),
+            label:`[${d.player||'?'}] ${d.label||''}`,
+            dice:Array.isArray(d.dice)?d.dice:(d.dice?[d.dice]:[]),
+            results:d.results||[],
+            total:d.total||0,
+            charId:d.charId||d.player||'remote',
+            charName:d.charName||d.player||'远程玩家',
+            channel:chName,
+            fromFB:true,
+          });
+          renderHistory();
+        });
+        this._kpChListeners[chName]={ref:rollRef,fn:rollFn};
+      });
+    }
   },
 
   _listenMembers(){
@@ -3760,12 +3895,19 @@ const FB={
 
   _renderChList(){
     const el=document.getElementById('fbChList');if(!el)return;
-    el.innerHTML=Object.keys(this.channels).map(ch=>{
+    // Sort: general first, then others alphabetically
+    const ids=Object.keys(this.channelList.general?this.channelList:this.channels);
+    ids.sort((a,b)=>a==='general'?-1:b==='general'?1:a.localeCompare(b));
+    el.innerHTML=ids.map(ch=>{
+      const meta=this.channelList[ch]||{displayName:ch,protected:ch==='general'};
       const active=ch===this.activeCh;
-      const canDel=this.isKP&&ch!=='general';
+      const canDel=this.isKP&&!meta.protected;
+      const dot=CH_COLORS[ch]?`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${_chColor(ch)};margin-right:4px;flex-shrink:0"></span>`:'';
+      const lock=meta.protected?`<span class="fb-ch-protected" title="预设频道">🔒</span>`:'';
       return`<div class="fb-ch-item${active?' active':''}" data-ch="${esc(ch)}">
         <span class="fb-ch-hash">#</span>
-        <span class="fb-ch-name">${esc(ch)}</span>
+        ${dot}<span class="fb-ch-name">${esc(meta.displayName||ch)}</span>
+        ${lock}
         <span class="fb-ch-unread"></span>
         ${canDel?`<button class="fb-ch-del" data-del="${esc(ch)}" title="删除频道">×</button>`:''}
       </div>`;
@@ -3781,44 +3923,49 @@ const FB={
     });
   },
 
-  _renderSendSel(){
-    const sel=document.getElementById('fbSendSel');if(!sel)return;
-    const cur=sel.value;
-    sel.innerHTML='<option value="">不同步</option>'+
-      Object.keys(this.channels).map(ch=>
-        `<option value="${esc(ch)}"${ch===cur?' selected':''}># ${esc(ch)}</option>`
-      ).join('');
-  },
-
   _renderMembers(){
     const el=document.getElementById('fbMembersList');
     const secLbl=document.getElementById('fbMbrSecLbl');
     if(!el)return;
-    const entries=Object.entries(this.members).filter(([n,m])=>m&&!(this.isKP&&n===this.playerName));
-    if(secLbl)secLbl.textContent=`成员 (${entries.length} 在线)`;
-    el.innerHTML=entries.map(([name,m])=>{
+    // All members (incl. KP's own entry from members node)
+    const allEntries=Object.entries(this.members).filter(([,m])=>m);
+    const total=allEntries.length;
+    if(secLbl)secLbl.textContent=`成员 (${total} 在线)`;
+    // Sort KP first, then alphabetically by player name
+    allEntries.sort(([na,ma],[nb,mb])=>{
+      if(ma.isKP&&!mb.isKP)return -1;
+      if(!ma.isKP&&mb.isKP)return 1;
+      return na.localeCompare(nb);
+    });
+    el.innerHTML=allEntries.map(([playerName,m])=>{
       const char=m.char;
+      const isThisKP=!!m.isKP;
+      // Character name priority; fall back to player name
+      const charName=m.characterName||(char&&char.name&&char.name!=='新角色'?char.name:'');
+      const displayName=charName||playerName;
+      const showPlayerId=charName&&charName!==playerName;
       let barsHtml='';
-      if(char){
+      if(!isThisKP&&char){
         if(char.HP&&char.HP.max>0){
           const pct=Math.round(clamp(char.HP.cur/char.HP.max*100,0,100));
-          barsHtml+=`<div class="fb-mbr-bar-row"><div class="fb-mbr-bar-bg"><div class="fb-mbr-bar-fill hp${pct<=30?' low':''}" style="width:${pct}%"></div></div><span class="fb-mbr-bar-val">${char.HP.cur}/${char.HP.max}</span></div>`;
+          barsHtml+=`<div class="fb-mbr-bar-row"><span style="font-size:9px;color:var(--dim);width:14px">HP</span><div class="fb-mbr-bar-track"><div class="fb-mbr-bar-fill hp" style="width:${pct}%"></div></div><span style="font-size:9px;color:var(--dim);white-space:nowrap">${char.HP.cur}/${char.HP.max}</span></div>`;
         }
         if(char.SAN&&char.SAN.max>0){
           const pct=Math.round(clamp(char.SAN.cur/char.SAN.max*100,0,100));
-          barsHtml+=`<div class="fb-mbr-bar-row"><div class="fb-mbr-bar-bg"><div class="fb-mbr-bar-fill san" style="width:${pct}%"></div></div><span class="fb-mbr-bar-val">${char.SAN.cur}/${char.SAN.max}</span></div>`;
+          barsHtml+=`<div class="fb-mbr-bar-row"><span style="font-size:9px;color:var(--dim);width:14px">理</span><div class="fb-mbr-bar-track"><div class="fb-mbr-bar-fill san" style="width:${pct}%"></div></div><span style="font-size:9px;color:var(--dim);white-space:nowrap">${char.SAN.cur}/${char.SAN.max}</span></div>`;
         }
       }
-      const avatarBg=char&&char.avatar?'transparent':nameHashColor(name);
+      const avatarBg=char&&char.avatar?'transparent':nameHashColor(playerName);
       const avatarContent=char&&char.avatar
         ?`<img src="${char.avatar}" style="width:100%;height:100%;object-fit:cover">`
-        :`<span style="color:#fff">${(name[0]||'?').toUpperCase()}</span>`;
+        :`<span style="color:#fff;font-size:11px;font-weight:700">${(displayName[0]||'?').toUpperCase()}</span>`;
       return`<div class="fb-mbr-item">
-        <div class="fb-mbr-top">
-          <div class="fb-mbr-avatar-sm" style="background:${avatarBg}">${avatarContent}</div>
-          <span class="fb-mbr-name">${esc(name)}${m.isKP?'<span style="font-size:9px;padding:1px 4px;background:rgba(201,168,76,.18);color:var(--gold);border-radius:3px;border:1px solid rgba(201,168,76,.35);margin-left:4px">KP</span>':''}</span>
-          ${char&&char.name?`<span class="fb-mbr-ch-tag">${esc(char.name)}</span>`:''}
+        <div class="fb-mbr-avatar" style="background:${avatarBg}">${avatarContent}</div>
+        <div class="fb-mbr-info">
+          <div class="fb-mbr-charname">${esc(displayName)}</div>
+          ${showPlayerId?`<div class="fb-mbr-playerid">${esc(playerName)}</div>`:''}
         </div>
+        ${isThisKP?`<span class="fb-mbr-kp-badge">KP</span>`:''}
         ${barsHtml?`<div class="fb-mbr-bars">${barsHtml}</div>`:''}
       </div>`;
     }).join('');
@@ -3826,17 +3973,25 @@ const FB={
 
   _renderFooter(){
     const c=App.char;
-    const nm=c?c.name:(this.playerName||'-');
+    const charNm=c&&c.name&&c.name!=='新角色'?c.name:'';
+    const playerNm=this.playerName||'-';
+    const displayNm=charNm||playerNm;
     const nameEl=document.getElementById('fbSbCharName');
+    const chEl=document.getElementById('fbSbCharCh');
     const avatarEl=document.getElementById('fbSbAvatar');
-    if(nameEl)nameEl.textContent=nm;
+    if(nameEl)nameEl.textContent=displayNm;
+    // Show player ID as subtitle if character name differs
+    if(chEl&&charNm&&charNm!==playerNm)
+      chEl.textContent=playerNm;
+    else if(chEl)
+      chEl.textContent='# '+(this.channelList[this.activeCh]?.displayName||this.activeCh);
     if(avatarEl){
       if(c&&c.avatar){
         avatarEl.style.background='transparent';
         avatarEl.innerHTML=`<img src="${c.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
       }else{
-        avatarEl.style.background=nameHashColor(nm);
-        avatarEl.innerHTML=`<span style="color:#fff;font-size:13px;font-weight:700">${(nm[0]||'?').toUpperCase()}</span>`;
+        avatarEl.style.background=nameHashColor(displayNm);
+        avatarEl.innerHTML=`<span style="color:#fff;font-size:13px;font-weight:700">${(displayNm[0]||'?').toUpperCase()}</span>`;
       }
     }
   },
