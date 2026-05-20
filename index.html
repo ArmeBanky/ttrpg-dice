@@ -1219,6 +1219,17 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 .fb-mbr-bar-fill{height:100%;border-radius:2px;transition:width .3s}
 .fb-mbr-bar-fill.hp{background:var(--green)}
 .fb-mbr-bar-fill.san{background:#3b82f6}
+/* Feature 1: grade badge in history */
+.hist-grade-badge{font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;display:inline-block;flex-shrink:0;line-height:1.7}
+/* Feature 2: secret roll toggle */
+.secret-toggle{font-size:11px;padding:0 10px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--dim);cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.secret-toggle:hover{color:var(--text)}
+.secret-toggle.active{background:rgba(155,89,182,.25);border-color:#9b59b6;color:#c084fc}
+/* Secret history entries (KP only) */
+.hist-msg.hist-secret{background:rgba(155,89,182,.05)!important}
+.hist-msg.hist-secret::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:#9b59b6;border-radius:0 2px 2px 0}
+.hist-reveal-btn{font-size:10px;padding:2px 8px;border:1px solid rgba(155,89,182,.45);background:rgba(155,89,182,.12);color:#c084fc;border-radius:4px;cursor:pointer;transition:background .15s;white-space:nowrap;flex-shrink:0;line-height:1.7}
+.hist-reveal-btn:hover{background:rgba(155,89,182,.3)}
 /* Fix 2: history player ID tag */
 .hist-player-id{font-size:9px;color:var(--dim);margin-left:4px;font-weight:400;font-family:var(--font-body);opacity:.8}
 /* Fix 4: channel inline rename input */
@@ -1351,8 +1362,9 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
                 <option value="p3">惩罚 ×3</option>
               </select>
             </div>
-            <div class="sk-judge-btn-row">
-              <button class="ca-judge-btn" id="btnSkillCheck" style="width:100%;margin-bottom:12px">判定</button>
+            <div class="sk-judge-btn-row" style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+              <button class="ca-judge-btn" id="btnSkillCheck" style="flex:1">判定</button>
+              <button class="secret-toggle kp-secret-toggle hidden" id="btnSkSecretToggle">👁 公开</button>
             </div>
             <div id="skillCheckResult"><div class="empty">选择技能后点击判定</div></div>
           </div>
@@ -1367,6 +1379,7 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
             <div class="roll-row">
               <button class="ca-judge-btn" id="btnRoll" style="flex:none;padding:0 28px;height:44px;font-size:14px;letter-spacing:1px">投掷骰子</button>
               <button class="btn" id="btnClear" style="padding:5px 12px">清空</button>
+              <button class="secret-toggle kp-secret-toggle hidden" id="btnDiceSecretToggle">👁 公开</button>
               <label style="font-size:12px;color:var(--dim);display:flex;align-items:center;gap:5px;cursor:pointer">
                 <input type="checkbox" id="chkD100"> D100 (D10%+D10)
               </label>
@@ -2135,7 +2148,8 @@ function renderHistory(){
     const diceHtml=diceArr.length?`<div class="hist-msg-dice">${diceArr.map(d=>`<span class="hist-die">${esc(String(d))}</span>`).join('')}</div>`:'';
     const results=e.results||[];
     const resHtml=results.length?results.map(r=>`<span class="hist-result-die">${Array.isArray(r)?r.join('|'):r}</span>`).join(''):'';
-    const gradeHtml=e.grade?`<span class="hist-grade ${histGradeCls(e.grade)}">${esc(e.grade)}</span>`:'';
+    // Feature 1: colored grade badge (replaces old hist-grade span)
+    const badgeHtml=_gradeBadgeHtml(e.grade);
     const totalHtml=(e.total!==undefined&&e.total!==null)?`<span class="hist-msg-total">= ${e.total}</span>`:'';
     // Channel tag: show colored dot for KP multi-channel view
     let chHtml='';
@@ -2145,21 +2159,34 @@ function renderHistory(){
       const dotStyle=`background:${_chColor(e.channel)}`;
       chHtml=`<span class="hist-msg-ch"><span class="hist-ch-dot" style="${dotStyle}"></span>${esc(chLabel)}</span>`;
     }
-    html+=`<div class="hist-msg${isSelf?' hist-self':''}">
+    // Feature 2: secret entry extra elements
+    const isSecret=!!e.isSecret;
+    const secretIcon=isSecret?`<span style="font-size:11px;opacity:.6;margin-left:2px" title="暗投">🔒</span>`:'';
+    const revealBtn=isSecret&&FB.isKP
+      ?`<button class="hist-reveal-btn" data-sk="${esc(e.secretKey||'')}" data-ts="${e.ts}">📢 公开</button>`:'';
+    const msgCls=`hist-msg${isSelf?' hist-self':''}${isSecret?' hist-secret':''}`;
+    html+=`<div class="${msgCls}">
       <div class="hist-msg-avatar" style="background:${color}">${esc(cname[0]||'?')}</div>
       <div class="hist-msg-body">
         <div class="hist-msg-hdr">
-          <span class="hist-msg-name" style="color:${color}">${esc(cname)}</span>${e.fromFB&&e.playerId&&e.playerId!==cname?`<span class="hist-player-id">@${esc(e.playerId)}</span>`:''}
+          <span class="hist-msg-name" style="color:${color}">${esc(cname)}</span>${e.fromFB&&e.playerId&&e.playerId!==cname?`<span class="hist-player-id">@${esc(e.playerId)}</span>`:''}${secretIcon}
           ${chHtml}
           <span class="hist-msg-time">${timeStr}</span>
+          ${revealBtn}
         </div>
         ${e.label?`<div class="hist-msg-text">${esc(e.label)}</div>`:''}
         ${diceHtml}
-        <div class="hist-msg-results">${resHtml}${gradeHtml}${totalHtml}</div>
+        <div class="hist-msg-results">${resHtml}${badgeHtml}${totalHtml}</div>
       </div>
     </div>`;
   }
   el.innerHTML=html;
+  // Bind "公开" reveal buttons
+  el.querySelectorAll('.hist-reveal-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      FB.revealSecretRoll(btn.dataset.sk,parseInt(btn.dataset.ts)||0);
+    });
+  });
   const scrollEl=el.closest('.tab-scroll');
   if(scrollEl)requestAnimationFrame(()=>{scrollEl.scrollTop=scrollEl.scrollHeight;});
 }
@@ -2209,7 +2236,7 @@ function cocGrade(roll,skVal){
   return{grade:'失败',cls:'cr-fail'};
 }
 
-function doCOCCheck(skillVal,adv,char){
+function doCOCCheck(skillVal,adv,char,skillName){
   const val=parseInt(skillVal)||0;
   if(!val)return null;
   const r1=fl(Math.random()*100)+1;
@@ -2219,7 +2246,8 @@ function doCOCCheck(skillVal,adv,char){
   const hard=fl(val/2),ext=fl(val/5);
   const{grade,cls}=cocGrade(final,val);
   const detail=r2!=null?`${adv==='bonus'?'加骰':'减骰'}:[${r1},${r2}]→${final}`:`投掷:${final}`;
-  S.pushHist({ts:Date.now(),label:`技能判定(${val})`,dice:[`D100=${final}`],total:final,grade,charId:char?.id,charName:char?.name});
+  const lbl=skillName?`${skillName}判定`:`技能判定(${val})`;
+  S.pushHist({ts:Date.now(),label:lbl,dice:[`D100=${final}`],total:final,grade,skillName:skillName||'',charId:char?.id,charName:char?.name});
   return{grade,cls,detail,val,hard,ext,final};
 }
 
@@ -2508,6 +2536,8 @@ const App={
       DICE.forEach(dt=>{cnts[dt.key]=0;this.updateCnt(dt.key);});
     });
     document.getElementById('btnRoll').addEventListener('click',()=>this.doRoll());
+    const diceSecBtn=document.getElementById('btnDiceSecretToggle');
+    if(diceSecBtn)diceSecBtn.onclick=_toggleSecretRoll;
   },
 
   setCount(key,delta){cnts[key]=clamp(cnts[key]+delta,0,20);this.updateCnt(key);},
@@ -2593,7 +2623,7 @@ const App={
         el.addEventListener('click',()=>{
           const val=parseInt(el.dataset.check);
           const skName=el.dataset.skname||'技能';
-          const res=doCOCCheck(val,'normal',char);
+          const res=doCOCCheck(val,'normal',char,skName);
           if(!res)return;
           const resultsEl=document.getElementById('diceResults');
           resultsEl.innerHTML=`<div class="res-header">${esc(skName)} 判定</div>
@@ -2804,6 +2834,8 @@ const App={
     btn.parentNode.replaceChild(nb,btn);
     nb.innerHTML=`${DICE_OUTLINE_SVG} 判定`;
     const origHtml=nb.innerHTML;
+    const secBtn=document.getElementById('btnSkSecretToggle');
+    if(secBtn)secBtn.onclick=_toggleSecretRoll;
     const _showSkResult=(el,cls,grade,detail)=>{
       const gradeColor={'cr-crit':'var(--gold)','cr-ext':'#c084fc','cr-hard':'#60a5fa','cr-ok':'var(--green)','cr-fail':'rgba(180,180,200,.8)','cr-fumb':'var(--red)'}[cls]||'var(--text)';
       const card=document.createElement('div');
@@ -2848,14 +2880,14 @@ const App={
         const cls=ok?'cr-ok':'cr-fumb';
         _showSkResult(el,cls,ok?'✓ 成功':'✕ 失败',`SAN判定 — ${roll} / ${sanCur}${advNote}`);
         setTimeout(()=>SFX.grade(ok?'成功':'失败'),320);
-        S.pushHist({ts:Date.now(),label:'SAN判定',dice:[`D100=${roll}`],total:roll,grade:ok?'成功':'失败',charId:char?.id,charName:char?.name});
+        S.pushHist({ts:Date.now(),label:'SAN判定',dice:[`D100=${roll}`],total:roll,grade:ok?'成功':'失败',skillName:'SAN',charId:char?.id,charName:char?.name});
       }else if(v.startsWith('attr:')){
         const parts=v.split(':'),attrKey=parts[1],attrVal=parseInt(parts[2])||0;
         const attrName=ATTR_NAMES[attrKey]||attrKey;
         const{grade,cls}=cocGrade(roll,attrVal);
         _showSkResult(el,cls,grade,`${attrName}(${attrKey}) — ${roll} / ${attrVal}${advNote}`);
         setTimeout(()=>SFX.grade(grade),320);
-        S.pushHist({ts:Date.now(),label:`${attrName}判定`,dice:[`D100=${roll}`],total:roll,grade,charId:char?.id,charName:char?.name});
+        S.pushHist({ts:Date.now(),label:`${attrName}判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:attrName,charId:char?.id,charName:char?.name});
       }else if(v.startsWith('sk:')){
         const parts=v.split(':'),sid=parts[1],skVal=parseInt(parts[2])||0;
         const sk=(char.coc.skills||[]).find(s=>s.id===sid);
@@ -2863,7 +2895,7 @@ const App={
         const{grade,cls}=cocGrade(roll,skVal);
         _showSkResult(el,cls,grade,`${esc(skName)} — ${roll} / ${skVal}${advNote}`);
         setTimeout(()=>SFX.grade(grade),320);
-        S.pushHist({ts:Date.now(),label:`${skName}判定`,dice:[`D100=${roll}`],total:roll,grade,charId:char?.id,charName:char?.name});
+        S.pushHist({ts:Date.now(),label:`${skName}判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:skName,charId:char?.id,charName:char?.name});
       }
       startCooldown(nb,3,origHtml);
       renderHistory();
@@ -3120,6 +3152,7 @@ Object.assign(App,{
           <div class="ca-btn-row">
             <button class="ca-counter-btn" id="caIsCounter" title="反击：极难/大成功时按普通伤害结算">⚔ 反击</button>
             <button class="ca-judge-btn" id="caCombatBtn">${diceSVG} 判定</button>
+            ${FB.isKP?`<button class="secret-toggle kp-secret-toggle${_isSecretRoll?' active':''}" id="caCombatSecret">${_isSecretRoll?'🔒 暗投':'👁 公开'}</button>`:''}
           </div>
           <div class="ca-result-card" id="caCombatResult"></div>
           <div class="ca-dmg-result-card" id="caDmgAutoResult"></div>
@@ -3480,10 +3513,11 @@ Object.assign(App,{
         rc.classList.add('showing');
       }
       this._caAutoCalcDmg(char,wi,w,grade,isCounter);
-      S.pushHist({ts:Date.now(),label:`${w.name}战斗判定`,dice:[`D100=${roll}`],total:roll,grade,charId:char?.id,charName:char?.name});
+      S.pushHist({ts:Date.now(),label:`${w.name}战斗判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:w.name,charId:char?.id,charName:char?.name});
       renderHistory();
       startCooldown(btn,3,origHtml);
     });
+    document.getElementById('caCombatSecret')?.addEventListener('click',_toggleSecretRoll);
   },
 });
 
@@ -3709,6 +3743,7 @@ const FB={
         document.getElementById('fbSbKpBadge')?.classList.remove('hidden');
         document.getElementById('fbSbKpTag')?.classList.remove('hidden');
       }
+      _showKPTools(this.isKP);
       this._toast('已连接到 '+this.roomId+(this.isKP?' · 你是KP':''),'success');
     }catch(e){
       this._setDot('');
@@ -3742,6 +3777,7 @@ const FB={
     document.getElementById('fbSbKpTag')?.classList.add('hidden');
     const cl=document.getElementById('fbChList');if(cl)cl.innerHTML='';
     const ml=document.getElementById('fbMembersList');if(ml)ml.innerHTML='';
+    _showKPTools(false);
     this._updateChIndicator('');
   },
 
@@ -3771,6 +3807,9 @@ const FB={
           charId:d.charId||d.player||'remote',
           charName:d.charName||d.player||'远程玩家',
           playerId:d.player||'',
+          grade:d.grade||'',
+          judgementLevel:d.judgementLevel||0,
+          skillName:d.skillName||'',
           channel:chName,
           fromFB:true,
         });
@@ -3817,21 +3856,63 @@ const FB={
 
   pushRoll(entry){
     if(!this.roomId||!this.db||!this.activeCh)return;
+    const rollData={
+      ts:entry.ts||Date.now(),
+      player:this.playerName,
+      playerId:this.playerName,
+      charId:entry.charId||'',
+      charName:entry.charName||this.playerName,
+      label:entry.label||'',
+      dice:Array.isArray(entry.dice)?entry.dice:(entry.dice?[entry.dice]:[]),
+      results:Array.isArray(entry.results)?entry.results:[],
+      total:entry.total||0,
+      grade:entry.grade||'',
+      judgementLevel:_gradeLevel(entry.grade||''),
+      skillName:entry.skillName||'',
+      channel:entry.channel||this.activeCh,
+    };
+    if(entry.isSecret){
+      try{
+        const newRef=this.db.ref(`rooms/${this.roomId}/secret/${this.playerName}`).push({...rollData,isSecret:true});
+        // Store Firebase key back into local history entry (key is generated synchronously)
+        const hist=S.getHist();
+        const idx=hist.findIndex(h=>h.isSecret&&h.ts===entry.ts);
+        if(idx>=0){hist[idx].secretKey=newRef.key;S._s('ttrpg_h',hist);}
+      }catch(e){console.error('pushRoll(secret):',e);}
+      return;
+    }
     const ch=this.activeCh;
-    try{
-      this.db.ref(`rooms/${this.roomId}/channels/${ch}/rolls`).push({
-        ts:entry.ts||Date.now(),
-        player:this.playerName,
-        playerId:this.playerName,
-        charId:entry.charId||'',
-        charName:entry.charName||this.playerName,
-        label:entry.label||'',
-        dice:Array.isArray(entry.dice)?entry.dice:(entry.dice?[entry.dice]:[]),
-        results:Array.isArray(entry.results)?entry.results:[],
-        total:entry.total||0,
-        channel:ch,
-      });
-    }catch(e){console.error('pushRoll:',e);}
+    try{this.db.ref(`rooms/${this.roomId}/channels/${ch}/rolls`).push({...rollData,channel:ch});}
+    catch(e){console.error('pushRoll:',e);}
+  },
+
+  revealSecretRoll(secretKey,ts){
+    if(!this.isKP||!this.roomId)return;
+    const hist=S.getHist();
+    const idx=hist.findIndex(h=>h.secretKey===secretKey||(h.ts===ts&&h.isSecret));
+    if(idx<0)return;
+    const entry=hist[idx];
+    const ch=entry.channel||this.activeCh;
+    // Copy to public channel rolls
+    const rollData={
+      ts:entry.ts||Date.now(),player:this.playerName,playerId:this.playerName,
+      charId:entry.charId||'',charName:entry.charName||this.playerName,
+      label:entry.label||'',
+      dice:Array.isArray(entry.dice)?entry.dice:[],
+      results:Array.isArray(entry.results)?entry.results:[],
+      total:entry.total||0,
+      grade:entry.grade||'',judgementLevel:_gradeLevel(entry.grade||''),
+      skillName:entry.skillName||'',channel:ch,
+    };
+    this.db.ref(`rooms/${this.roomId}/channels/${ch}/rolls`).push(rollData).catch(e=>console.error(e));
+    // Remove from secret path
+    if(entry.secretKey)
+      this.db.ref(`rooms/${this.roomId}/secret/${this.playerName}/${entry.secretKey}`).remove().catch(()=>{});
+    // Update local entry
+    delete hist[idx].isSecret;delete hist[idx].secretKey;
+    S._s('ttrpg_h',hist);
+    renderHistory();
+    this._toast('已公开投掷结果','success');
   },
 
   syncPlayer(){
@@ -3905,7 +3986,10 @@ const FB={
             total:d.total||0,
             charId:d.charId||d.player||'remote',
             charName:d.charName||d.player||'远程玩家',
-            playerId:d.player||'', // Fix 2
+            playerId:d.player||'',
+            grade:d.grade||'',
+            judgementLevel:d.judgementLevel||0,
+            skillName:d.skillName||'',
             channel:chName,
             fromFB:true,
           });
@@ -4203,9 +4287,52 @@ const FB={
   },
 };
 
+/* ===== GRADE BADGE + SECRET ROLL HELPERS ===== */
+function _gradeLevel(grade){
+  if(!grade)return 0;
+  if(grade.includes('大成功'))return 6;
+  if(grade.includes('极难'))return 5;
+  if(grade.includes('困难'))return 4;
+  if(grade==='成功')return 3;
+  if(grade==='失败')return 2;
+  if(grade.includes('大失败'))return 1;
+  return 0;
+}
+function _gradeBadgeHtml(grade){
+  if(!grade)return'';
+  let bg,c;
+  if(grade.includes('大成功')){bg='#c9a84c';c='#1a1200';}
+  else if(grade.includes('大失败')){bg='#c0392b';c='#fff';}
+  else if(grade.includes('极难')){bg='#9b59b6';c='#fff';}
+  else if(grade.includes('困难')){bg='#3498db';c='#fff';}
+  else if(grade==='成功'){bg='#2ecc71';c='#0d2a10';}
+  else if(grade==='失败'){bg='rgba(255,255,255,.15)';c='#888';}
+  else return'';
+  const label=grade.replace('★','').replace('✕','').trim();
+  return`<span class="hist-grade-badge" style="background:${bg};color:${c}">${esc(label)}</span>`;
+}
+let _isSecretRoll=false;
+function _toggleSecretRoll(){
+  _isSecretRoll=!_isSecretRoll;
+  document.querySelectorAll('.kp-secret-toggle').forEach(btn=>{
+    btn.classList.toggle('active',_isSecretRoll);
+    btn.textContent=_isSecretRoll?'🔒 暗投':'👁 公开';
+  });
+}
+function _showKPTools(show){
+  document.querySelectorAll('.kp-secret-toggle').forEach(el=>el.classList.toggle('hidden',!show));
+  if(!show&&_isSecretRoll)_toggleSecretRoll(); // reset on leave
+}
+
 // Hook S.pushHist: broadcast local rolls to Firebase (skip if fromFB to avoid echo)
 const _fbOrigPushHist=S.pushHist.bind(S);
-S.pushHist=function(e){_fbOrigPushHist(e);if(!e.fromFB)FB.pushRoll(e);};
+S.pushHist=function(e){
+  if(!e.fromFB&&FB.isKP&&_isSecretRoll){
+    e={...e, isSecret:true, channel:e.channel||FB.activeCh};
+  }
+  _fbOrigPushHist(e);
+  if(!e.fromFB)FB.pushRoll(e);
+};
 
 // Hook App.adjustBar: sync player status after HP/SAN changes
 const _fbPrevAdjBar=App.adjustBar.bind(App);
