@@ -1219,6 +1219,26 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 .fb-mbr-bar-fill{height:100%;border-radius:2px;transition:width .3s}
 .fb-mbr-bar-fill.hp{background:var(--green)}
 .fb-mbr-bar-fill.san{background:#3b82f6}
+/* Fix 2: history player ID tag */
+.hist-player-id{font-size:9px;color:var(--dim);margin-left:4px;font-weight:400;font-family:var(--font-body);opacity:.8}
+/* Fix 4: channel inline rename input */
+.fb-ch-rename-inp{background:transparent;border:none;border-bottom:1.5px solid var(--gold);color:var(--text);font-size:12px;outline:none;padding:0 0 1px;font-family:inherit;flex:1;min-width:0;line-height:1}
+/* Fix 5: channel member count badge */
+.fb-ch-count{font-size:10px;background:rgba(255,255,255,.08);color:#666;border-radius:8px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 4px;flex-shrink:0;display:inline-block}
+/* Fix 6: channel hierarchy */
+.fb-ch-item.ch-parent::before{content:'';position:absolute;left:-6px;top:4px;bottom:4px;width:2px;background:rgba(201,168,76,.35);border-radius:0 2px 2px 0}
+.fb-ch-item.ch-parent.active::before{background:var(--gold)}
+.fb-ch-hash.ch-parent-icon{font-size:13px;color:rgba(201,168,76,.55)}
+.fb-ch-item.ch-parent .fb-ch-hash.ch-parent-icon,.fb-ch-item.ch-parent.active .fb-ch-hash{color:rgba(201,168,76,.8)}
+.fb-ch-name.ch-parent-name{font-size:13px;color:rgba(255,255,255,.65);font-weight:500}
+.fb-ch-item:hover .fb-ch-name.ch-parent-name,.fb-ch-item.active .fb-ch-name.ch-parent-name{color:#fff}
+.fb-ch-name.ch-child-name{color:rgba(255,255,255,.42)}
+.fb-ch-item.ch-child{padding-left:18px}
+.fb-ch-sep{height:1px;background:rgba(255,255,255,.05);margin:3px 8px}
+.fb-ch-sub-hdr{display:flex;align-items:center;gap:4px;padding:4px 10px 2px;font-size:10px;color:var(--dim);cursor:pointer;user-select:none;letter-spacing:.5px}
+.fb-ch-sub-hdr:hover{color:#888}
+.fb-ch-sub-arrow{font-size:9px;transition:transform .15s;display:inline-block;opacity:.7}
+.fb-ch-sub-arrow.collapsed{transform:rotate(-90deg)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -2129,7 +2149,7 @@ function renderHistory(){
       <div class="hist-msg-avatar" style="background:${color}">${esc(cname[0]||'?')}</div>
       <div class="hist-msg-body">
         <div class="hist-msg-hdr">
-          <span class="hist-msg-name" style="color:${color}">${esc(cname)}</span>
+          <span class="hist-msg-name" style="color:${color}">${esc(cname)}</span>${e.fromFB&&e.playerId&&e.playerId!==cname?`<span class="hist-player-id">@${esc(e.playerId)}</span>`:''}
           ${chHtml}
           <span class="hist-msg-time">${timeStr}</span>
         </div>
@@ -3626,12 +3646,14 @@ const FB={
   channelList:{}, _kpChListeners:{}, _histFilterCh:'',
   _listeners:[], _rollRef:null, _rollListener:null,
   _playerRef:null, _hostRef:null, _membersCollapsed:false,
+  _subChCollapsed:false,
 
   init(){
     try{
       if(typeof firebase==='undefined'){console.warn('Firebase SDK not loaded');return;}
       const app=firebase.apps.length?firebase.apps[0]:firebase.initializeApp(firebaseConfig);
       this.db=firebase.database(app);
+      this._subChCollapsed=localStorage.getItem('fb_subch_collapsed')==='1';
     }catch(e){console.error('Firebase init:',e);}
   },
 
@@ -3656,7 +3678,7 @@ const FB={
       this._playerRef=this.db.ref(`rooms/${this.roomId}/players/${this.playerName}`);
       const charSnap=this._charSnapshot();
       await this._playerRef.set({online:true,ts:Date.now(),isKP:this.isKP,char:charSnap,
-        characterName:charSnap&&charSnap.name?charSnap.name:''});
+        characterName:charSnap&&charSnap.name?charSnap.name:'',currentChannel:'general'});
       this._playerRef.onDisconnect().remove();
       // Ensure default channels exist (channelList metadata + channels data node)
       const clRef=this.db.ref(`rooms/${this.roomId}/channelList`);
@@ -3729,6 +3751,8 @@ const FB={
       this._rollRef=null;this._rollListener=null;
     }
     this.activeCh=chName;
+    // Update currentChannel in Firebase (for member list filtering)
+    if(this._playerRef)this._playerRef.update({currentChannel:chName}).catch(()=>{});
     // Non-KP: listen to active channel for incoming rolls
     if(!this.isKP){
       this._rollRef=this.db.ref(`rooms/${this.roomId}/channels/${chName}/rolls`);
@@ -3746,6 +3770,7 @@ const FB={
           total:d.total||0,
           charId:d.charId||d.player||'remote',
           charName:d.charName||d.player||'远程玩家',
+          playerId:d.player||'',
           channel:chName,
           fromFB:true,
         });
@@ -3753,6 +3778,7 @@ const FB={
       });
     }
     this._renderChList();
+    this._renderMembers(); // re-filter member list for non-KP
     const displayName=this.channelList[chName]?.displayName||chName;
     this._updateChIndicator(displayName);
     const chEl=document.getElementById('fbSbCharCh');
@@ -3796,6 +3822,7 @@ const FB={
       this.db.ref(`rooms/${this.roomId}/channels/${ch}/rolls`).push({
         ts:entry.ts||Date.now(),
         player:this.playerName,
+        playerId:this.playerName,
         charId:entry.charId||'',
         charName:entry.charName||this.playerName,
         label:entry.label||'',
@@ -3811,7 +3838,8 @@ const FB={
     if(!this._playerRef||!this.roomId)return;
     const charSnap=this._charSnapshot();
     try{this._playerRef.update({char:charSnap,ts:Date.now(),isKP:this.isKP,
-      characterName:charSnap&&charSnap.name?charSnap.name:''});}
+      characterName:charSnap&&charSnap.name?charSnap.name:'',
+      currentChannel:this.activeCh});}
     catch(e){}
   },
 
@@ -3856,11 +3884,14 @@ const FB={
 
   _listenAllRolls(){
     if(!this.isKP||!this.roomId)return;
-    const allChs=Object.keys(this.channels);
+    // Fix 1: use channelList (not channels) so IDs are correct even before channels node loads
+    const allChs=Object.keys(this.channelList);
     for(const chName of allChs){
-      if(this._kpChListeners[chName])continue; // already listening
+      if(this._kpChListeners[chName])continue; // already listening (or pending)
+      this._kpChListeners[chName]='pending'; // prevent race-condition double-subscribe
       const rollRef=this.db.ref(`rooms/${this.roomId}/channels/${chName}/rolls`);
       rollRef.once('value').then(existing=>{
+        if(!this.roomId){delete this._kpChListeners[chName];return;}
         const lastKey=existing.exists()?Object.keys(existing.val()||{}).pop():null;
         const rollFn=rollRef.on('child_added',snap=>{
           if(lastKey&&snap.key<=lastKey)return;
@@ -3874,6 +3905,7 @@ const FB={
             total:d.total||0,
             charId:d.charId||d.player||'remote',
             charName:d.charName||d.player||'远程玩家',
+            playerId:d.player||'', // Fix 2
             channel:chName,
             fromFB:true,
           });
@@ -3895,31 +3927,92 @@ const FB={
 
   _renderChList(){
     const el=document.getElementById('fbChList');if(!el)return;
-    // Sort: general first, then others alphabetically
-    const ids=Object.keys(this.channelList.general?this.channelList:this.channels);
-    ids.sort((a,b)=>a==='general'?-1:b==='general'?1:a.localeCompare(b));
-    el.innerHTML=ids.map(ch=>{
+    // Count members per channel (Fix 5)
+    const countPerCh={};
+    Object.values(this.members).forEach(m=>{
+      if(!m)return;
+      const ch=m.currentChannel||'general';
+      countPerCh[ch]=(countPerCh[ch]||0)+1;
+    });
+    const allIds=Object.keys(Object.keys(this.channelList).length?this.channelList:this.channels);
+    const parentIds=allIds.filter(id=>id==='general');
+    const childIds=allIds.filter(id=>id!=='general').sort((a,b)=>a.localeCompare(b));
+    const _renderItem=(ch,isParent)=>{
       const meta=this.channelList[ch]||{displayName:ch,protected:ch==='general'};
       const active=ch===this.activeCh;
       const canDel=this.isKP&&!meta.protected;
-      const dot=CH_COLORS[ch]?`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${_chColor(ch)};margin-right:4px;flex-shrink:0"></span>`:'';
-      const lock=meta.protected?`<span class="fb-ch-protected" title="预设频道">🔒</span>`:'';
-      return`<div class="fb-ch-item${active?' active':''}" data-ch="${esc(ch)}">
-        <span class="fb-ch-hash">#</span>
-        ${dot}<span class="fb-ch-name">${esc(meta.displayName||ch)}</span>
-        ${lock}
+      const cnt=countPerCh[ch]||0;
+      const countHtml=cnt>0?`<span class="fb-ch-count">${cnt}</span>`:'';
+      const hashCls=isParent?'fb-ch-hash ch-parent-icon':'fb-ch-hash';
+      const hashIcon=isParent?'🌐':'#';
+      const nameCls=isParent?'fb-ch-name ch-parent-name':'fb-ch-name ch-child-name';
+      const itemCls=`fb-ch-item${active?' active':''}${isParent?' ch-parent':' ch-child'}`;
+      return`<div class="${itemCls}" data-ch="${esc(ch)}">
+        <span class="${hashCls}">${hashIcon}</span>
+        <span class="${nameCls}" data-rename-name="1">${esc(meta.displayName||ch)}</span>
+        ${countHtml}
         <span class="fb-ch-unread"></span>
         ${canDel?`<button class="fb-ch-del" data-del="${esc(ch)}" title="删除频道">×</button>`:''}
       </div>`;
-    }).join('');
+    };
+    let html=parentIds.map(ch=>_renderItem(ch,true)).join('');
+    if(childIds.length){
+      const collapsed=this._subChCollapsed;
+      html+=`<div class="fb-ch-sep"></div>`;
+      html+=`<div class="fb-ch-sub-hdr" id="fbChSubHdr"><span class="fb-ch-sub-arrow${collapsed?' collapsed':''}">▾</span>小队频道</div>`;
+      if(!collapsed)html+=childIds.map(ch=>_renderItem(ch,false)).join('');
+    }
+    el.innerHTML=html;
+    // Click → switch channel
     el.querySelectorAll('.fb-ch-item').forEach(item=>{
       item.addEventListener('click',e=>{
         if(e.target.classList.contains('fb-ch-del'))return;
+        if(e.target.tagName==='INPUT')return;
         this.setActiveCh(item.dataset.ch);
       });
     });
+    // Delete channel
     el.querySelectorAll('.fb-ch-del').forEach(btn=>{
       btn.addEventListener('click',e=>{e.stopPropagation();this.deleteChannel(btn.dataset.del);});
+    });
+    // Fix 4: double-click rename (KP only, non-protected)
+    if(this.isKP){
+      el.querySelectorAll('[data-rename-name]').forEach(nameSpan=>{
+        const item=nameSpan.closest('.fb-ch-item');
+        const ch=item?.dataset.ch;
+        if(!ch)return;
+        const meta=this.channelList[ch]||{};
+        if(meta.protected)return;
+        nameSpan.addEventListener('dblclick',e=>{
+          e.stopPropagation();
+          const orig=nameSpan.textContent;
+          const inp=document.createElement('input');
+          inp.className='fb-ch-rename-inp';
+          inp.value=orig;
+          nameSpan.replaceWith(inp);
+          inp.focus();inp.select();
+          const commit=()=>{
+            const v=inp.value.trim();
+            if(v&&v!==orig){
+              this.db.ref(`rooms/${this.roomId}/channelList/${ch}/displayName`).set(v)
+                .catch(err=>this._toast('重命名失败: '+err.message,'error'));
+            }
+            // channelList listener will re-render; do a local restore if unchanged
+            if(!v||v===orig)this._renderChList();
+          };
+          inp.addEventListener('blur',commit,{once:true});
+          inp.addEventListener('keydown',e2=>{
+            if(e2.key==='Enter'){e2.preventDefault();inp.blur();}
+            else if(e2.key==='Escape'){inp.value=orig;inp.removeEventListener('blur',commit);inp.blur();this._renderChList();}
+          });
+        });
+      });
+    }
+    // Fix 6: sub-channel collapse toggle
+    document.getElementById('fbChSubHdr')?.addEventListener('click',()=>{
+      this._subChCollapsed=!this._subChCollapsed;
+      localStorage.setItem('fb_subch_collapsed',this._subChCollapsed?'1':'0');
+      this._renderChList();
     });
   },
 
@@ -3927,23 +4020,35 @@ const FB={
     const el=document.getElementById('fbMembersList');
     const secLbl=document.getElementById('fbMbrSecLbl');
     if(!el)return;
-    // All members (incl. KP's own entry from members node)
     const allEntries=Object.entries(this.members).filter(([,m])=>m);
-    const total=allEntries.length;
+    // Fix 3: non-KP sees only current channel members; KP sees all
+    let displayEntries;
+    if(this.isKP){
+      displayEntries=allEntries;
+    }else{
+      displayEntries=allEntries.filter(([,m])=>{
+        if(!m.currentChannel)return true; // backward compat: no currentChannel → show
+        return m.currentChannel===this.activeCh;
+      });
+    }
+    const total=displayEntries.length;
     if(secLbl)secLbl.textContent=`成员 (${total} 在线)`;
-    // Sort KP first, then alphabetically by player name
-    allEntries.sort(([na,ma],[nb,mb])=>{
+    // Sort KP first, then alphabetically
+    displayEntries.sort(([na,ma],[nb,mb])=>{
       if(ma.isKP&&!mb.isKP)return -1;
       if(!ma.isKP&&mb.isKP)return 1;
       return na.localeCompare(nb);
     });
-    el.innerHTML=allEntries.map(([playerName,m])=>{
+    el.innerHTML=displayEntries.map(([playerName,m])=>{
       const char=m.char;
       const isThisKP=!!m.isKP;
-      // Character name priority; fall back to player name
       const charName=m.characterName||(char&&char.name&&char.name!=='新角色'?char.name:'');
       const displayName=charName||playerName;
       const showPlayerId=charName&&charName!==playerName;
+      // Fix 3: KP shows which channel each member is in
+      const chLabel=this.isKP&&m.currentChannel
+        ?`<div style="font-size:9px;color:var(--dim);line-height:1.2"># ${esc(this.channelList[m.currentChannel]?.displayName||m.currentChannel)}</div>`
+        :'';
       let barsHtml='';
       if(!isThisKP&&char){
         if(char.HP&&char.HP.max>0){
@@ -3964,6 +4069,7 @@ const FB={
         <div class="fb-mbr-info">
           <div class="fb-mbr-charname">${esc(displayName)}</div>
           ${showPlayerId?`<div class="fb-mbr-playerid">${esc(playerName)}</div>`:''}
+          ${chLabel}
         </div>
         ${isThisKP?`<span class="fb-mbr-kp-badge">KP</span>`:''}
         ${barsHtml?`<div class="fb-mbr-bars">${barsHtml}</div>`:''}
