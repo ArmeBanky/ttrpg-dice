@@ -1256,6 +1256,95 @@ body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
 .fb-mbr-adj-btn{width:20px;height:18px;border:1px solid rgba(255,255,255,.1);border-radius:3px;background:rgba(255,255,255,.06);cursor:pointer;color:var(--text);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
 .fb-mbr-adj-btn:hover{background:rgba(255,255,255,.14);border-color:rgba(201,168,76,.4)}
 .fb-mbr-adj-nums{flex:1;text-align:center;font-size:10px;color:var(--text);font-family:var(--font-num)}
+/* ===== KP CONSOLE PANEL ===== */
+.kp-console{display:flex;flex-direction:column;height:100%;background:var(--bg);position:relative}
+/* Char selector bar */
+.kp-char-selector{height:52px;display:flex;align-items:center;padding:0 12px;gap:9px;border-bottom:1px solid var(--border-g);background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(0,0,0,0));flex-shrink:0;cursor:pointer;position:relative;user-select:none}
+.kp-char-selector::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.35),transparent)}
+.kp-sel-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden}
+.kp-sel-info{flex:1;min-width:0}
+.kp-sel-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kp-sel-type{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;display:inline-block;margin-top:1px}
+.kp-sel-type.player{background:rgba(52,152,219,.2);color:#60a5fa}
+.kp-sel-type.npc{background:rgba(249,115,22,.18);color:#fb923c}
+.kp-sel-type.self{background:rgba(201,168,76,.18);color:var(--gold)}
+.kp-sel-arrow{color:var(--dim);font-size:10px;transition:transform .2s;flex-shrink:0}
+.kp-sel-arrow.open{transform:rotate(180deg)}
+/* Char dropdown */
+.kp-char-dropdown{position:absolute;top:52px;left:0;right:0;background:#0d0d1a;border:1px solid var(--border-g);border-top:none;z-index:100;max-height:300px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.kp-char-dropdown::-webkit-scrollbar{width:3px}
+.kp-char-dropdown::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1)}
+.kp-drop-group-hdr{padding:5px 12px 2px;font-size:10px;color:var(--dim);letter-spacing:.5px;background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.04)}
+.kp-drop-item{display:flex;align-items:center;gap:7px;padding:7px 12px;cursor:pointer;transition:background .1s}
+.kp-drop-item:hover{background:rgba(255,255,255,.05)}
+.kp-drop-item.active{background:rgba(201,168,76,.08)}
+.kp-drop-avatar{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;overflow:hidden}
+.kp-drop-name{flex:1;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kp-drop-id{font-size:10px;color:var(--dim);flex-shrink:0}
+.kp-drop-del{width:18px;height:18px;border:none;background:transparent;color:rgba(192,57,43,.5);cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:3px;flex-shrink:0;padding:0}
+.kp-drop-del:hover{background:rgba(192,57,43,.15);color:var(--red-b)}
+.kp-drop-add{color:var(--gold)}
+/* KP tabs */
+.kp-tabs{display:flex;padding:5px 8px 0;gap:2px;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0;background:rgba(255,255,255,.015)}
+.kp-tab{flex:1;padding:5px 0 6px;text-align:center;font-size:11px;color:var(--dim);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;font-family:var(--font-body)}
+.kp-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.kp-tab:hover:not(.active){color:var(--text-muted)}
+/* Tab content */
+.kp-tab-content{flex:1;overflow-y:auto;padding:10px 10px 20px;display:flex;flex-direction:column;gap:2px}
+.kp-tab-content::-webkit-scrollbar{width:3px}
+.kp-tab-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+/* Status tab */
+.kp-bar-block{margin-bottom:10px}
+.kp-bar-lbl{font-size:10px;color:var(--dim);letter-spacing:.5px;margin-bottom:4px;font-weight:600}
+.kp-bar-ctrl{display:flex;align-items:center;gap:5px}
+.kp-adj{width:26px;height:26px;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:rgba(255,255,255,.05);color:var(--text);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;line-height:1}
+.kp-adj:hover{background:rgba(255,255,255,.12);border-color:rgba(201,168,76,.4)}
+.kp-bar-inp{width:38px;text-align:center;background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--text);font-size:14px;font-family:var(--font-num);font-weight:600;padding:2px 0;-moz-appearance:textfield}
+.kp-bar-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.kp-bar-inp:focus{outline:none;border-color:var(--gold-border)}
+.kp-bar-sep{color:var(--dim);font-size:12px;flex-shrink:0}
+.kp-bar-track{height:5px;background:rgba(255,255,255,.07);border-radius:3px;margin-top:5px;overflow:hidden}
+.kp-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+.kp-bar-fill.hp{background:var(--green)}
+.kp-bar-fill.san{background:#9b59b6}
+.kp-bar-fill.mp{background:#3498db}
+.kp-cond-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.kp-cond-tag{font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;transition:all .15s;user-select:none}
+.kp-cond-tag.active{border-color:var(--red);background:rgba(192,57,43,.15);color:var(--red-b)}
+/* Attrs tab */
+.kp-attr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:10px}
+.kp-attr-cell{background:rgba(255,255,255,.04);border-radius:5px;padding:5px 6px;text-align:center;border:1px solid rgba(255,255,255,.04)}
+.kp-attr-key{font-size:9px;color:var(--dim);letter-spacing:.3px;font-weight:600}
+.kp-attr-val{font-size:17px;font-family:var(--font-num);font-weight:600;color:var(--text);cursor:default}
+.kp-attr-val.editable{cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.1)}
+.kp-attr-val.editable:hover{color:var(--gold)}
+/* Skills tab */
+.kp-skill-list{display:flex;flex-direction:column}
+.kp-skill-row{display:flex;align-items:center;gap:4px;padding:3px 5px;border-radius:3px;cursor:default;position:relative}
+.kp-skill-row:hover{background:rgba(255,255,255,.05)}
+.kp-skill-name{flex:1;font-size:11px;color:var(--text)}
+.kp-skill-val{font-size:12px;font-family:var(--font-num);color:var(--text-muted);min-width:26px;text-align:right}
+.kp-skill-half{font-size:10px;color:var(--dim);min-width:22px;text-align:right}
+.kp-skill-fifth{font-size:10px;color:var(--dim);min-width:22px;text-align:right}
+.kp-skill-judge{display:none;font-size:10px;color:var(--gold);background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:3px;padding:0 5px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.kp-skill-row:hover .kp-skill-judge{display:inline-block}
+.kp-readonly-note{font-size:10px;color:var(--dim);text-align:center;padding:6px;margin-bottom:8px;background:rgba(255,255,255,.03);border-radius:4px;border:1px dashed rgba(255,255,255,.06)}
+.kp-sec-hdr{font-size:10px;color:var(--dim);letter-spacing:.4px;font-weight:600;margin:8px 0 4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.05)}
+/* NPC active border */
+.kp-console[data-char-type="npc"] .kp-char-selector{border-left:2px solid #f97316}
+/* Active indicator in topbar */
+.kp-active-indicator{display:none;align-items:center;gap:4px;font-size:11px;color:var(--gold);background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:4px;padding:2px 8px;flex-shrink:0;white-space:nowrap}
+.kp-active-indicator.visible{display:flex}
+/* NPC roll in history: orange left border */
+.hist-msg.hist-npc::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:#f97316;border-radius:0 2px 2px 0}
+/* NPC modal */
+.kp-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.kp-modal{background:var(--surface-solid);border:1px solid var(--border-g);border-radius:10px;padding:20px;width:360px;max-width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.kp-modal-title{font-family:var(--font-title);font-size:15px;color:var(--gold);margin-bottom:14px;letter-spacing:.5px}
+.kp-modal-tabs{display:flex;gap:4px;margin-bottom:12px}
+.kp-modal-tab{flex:1;padding:5px;text-align:center;font-size:11px;color:var(--dim);cursor:pointer;border:1px solid rgba(255,255,255,.07);border-radius:4px;background:transparent;transition:all .15s;font-family:var(--font-body)}
+.kp-modal-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08)}
+.kp-modal-sep{height:1px;background:rgba(255,255,255,.06);margin:10px 0}
 /* Fix 6: channel hierarchy */
 .fb-ch-item.ch-parent::before{content:'';position:absolute;left:-6px;top:4px;bottom:4px;width:2px;background:rgba(201,168,76,.35);border-radius:0 2px 2px 0}
 .fb-ch-item.ch-parent.active::before{background:var(--gold)}
@@ -1286,6 +1375,7 @@ body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
       <span class="tb-ch-ind-hash">#</span>
       <span class="tb-ch-ind-name" id="tbChName">general</span>
     </div>
+    <div class="kp-active-indicator" id="kpActiveIndicator">🎲 以 <strong id="kpActiveIndicatorName"></strong> 判定</div>
     <div style="flex:1"></div>
     <nav class="nav-tabs">
       <span class="nav-tab active" data-tab="dice">🎲 骰子台</span>
@@ -2196,7 +2286,8 @@ function renderHistory(){
     const secretIcon=isSecret?`<span style="font-size:11px;opacity:.6;margin-left:2px" title="暗投">🔒</span>`:'';
     const revealBtn=isSecret&&FB.isKP
       ?`<button class="hist-reveal-btn" data-sk="${esc(e.secretKey||'')}" data-ts="${e.ts}">📢 公开</button>`:'';
-    const msgCls=`hist-msg${isSelf?' hist-self':''}${isSecret?' hist-secret':''}`;
+    const isNpc=!!e.isNpc;
+    const msgCls=`hist-msg${isSelf?' hist-self':''}${isSecret?' hist-secret':''}${isNpc?' hist-npc':''}`;
     html+=`<div class="${msgCls}">
       <div class="hist-msg-avatar" style="background:${color}">${esc(cname[0]||'?')}</div>
       <div class="hist-msg-body">
@@ -2428,8 +2519,12 @@ const App={
   },
 
   renderDiceTab(){
-    document.getElementById('charPanel').innerHTML=genCharPanel(this.char);
-    this.bindCharPanel(this.char);
+    if(FB.isKP&&FB.roomId){
+      KP.renderConsole();
+    }else{
+      document.getElementById('charPanel').innerHTML=genCharPanel(this.char);
+      this.bindCharPanel(this.char);
+    }
     this.refreshSkillCheck();
     this.refreshCombatArena();
   },
@@ -2838,7 +2933,7 @@ const App={
   refreshSkillCheck(){
     const arena=document.getElementById('skillCheckArena');
     if(!arena)return;
-    const char=this.char;
+    const char=(FB.isKP&&FB.roomId&&KP._judgeChar)?KP._judgeChar:this.char;
     if(!char||char.mode!=='COC'){arena.classList.add('hidden');return;}
     arena.classList.remove('hidden');
     const ATTRS=[['STR','💪 力量'],['DEX','🏃 敏捷'],['CON','❤ 体质'],['INT','🧠 智力'],
@@ -3164,7 +3259,7 @@ Object.assign(App,{
     const arena=document.getElementById('combatArena');
     const content=document.getElementById('caContent');
     if(!arena||!content)return;
-    const char=this.char;
+    const char=(FB.isKP&&FB.roomId&&KP._judgeChar)?KP._judgeChar:this.char;
     if(!char||char.mode!=='COC'){arena.classList.add('hidden');return;}
     arena.classList.remove('hidden');
     const weapons=char.coc.weapons||[];
@@ -3791,6 +3886,13 @@ const FB={
       else document.body.classList.remove('fb-nonkp-room');
       this._saveRoomState();
       this._startHeartbeat();
+      if(this.isKP){
+        KP._selType='self';KP._selId=null;KP._judgeChar=null;
+        KP.startListening();
+        App.renderDiceTab?.();
+      }else{
+        _syncPlayerCard();
+      }
       this._toast('已连接到 '+this.roomId+(this.isKP?' · 你是KP':''),'success');
     }catch(e){
       this._setDot('');
@@ -3828,6 +3930,9 @@ const FB={
     const cl=document.getElementById('fbChList');if(cl)cl.innerHTML='';
     const ml=document.getElementById('fbMembersList');if(ml)ml.innerHTML='';
     _showKPTools(false);
+    KP.stopListening();
+    KP._playerCards={};
+    if(KP._selType!=='self'){KP._selType='self';KP._selId=null;KP._judgeChar=null;KP._updateActiveIndicator?.();}
     this._updateChIndicator('');
   },
 
@@ -3864,6 +3969,7 @@ const FB={
           diceModifier:d.diceModifier||'normal',
           allResults:d.allResults||[],
           usedResult:d.usedResult!=null?d.usedResult:d.total||0,
+          isNpc:!!d.isNpc,
           fromFB:true,
         });
         renderHistory();
@@ -3926,6 +4032,7 @@ const FB={
       diceModifier:entry.diceModifier||'normal',
       allResults:Array.isArray(entry.allResults)?entry.allResults:[],
       usedResult:entry.usedResult!=null?entry.usedResult:entry.total||0,
+      isNpc:!!entry.isNpc,
     };
     if(entry.isSecret){
       try{
@@ -4050,6 +4157,7 @@ const FB={
             diceModifier:d.diceModifier||'normal',
             allResults:d.allResults||[],
             usedResult:d.usedResult!=null?d.usedResult:d.total||0,
+            isNpc:!!d.isNpc,
             fromFB:true,
           });
           renderHistory();
@@ -4080,6 +4188,14 @@ const FB={
       if(remoteChar.HP&&remoteChar.HP.cur!=null&&remoteChar.HP.cur!==char.coc.HP.cur){char.coc.HP.cur=remoteChar.HP.cur;App.updateBarDOM(char,'hp');changed=true;}
       if(remoteChar.SAN&&remoteChar.SAN.cur!=null&&remoteChar.SAN.cur!==char.coc.SAN.cur){char.coc.SAN.cur=remoteChar.SAN.cur;App.updateBarDOM(char,'san');changed=true;}
       if(remoteChar.MP&&remoteChar.MP.cur!=null&&remoteChar.MP.cur!==char.coc.MP.cur){char.coc.MP.cur=remoteChar.MP.cur;App.updateBarDOM(char,'mp');changed=true;}
+      if(remoteChar.madness){
+        const m=remoteChar.madness;
+        char.coc.madness=char.coc.madness||{};
+        if(m.temporary!=null)char.coc.madness.temporary=m.temporary;
+        if(m.indefinite!=null)char.coc.madness.indefinite=m.indefinite;
+        changed=true;
+      }
+      if(remoteChar.conditions){char.coc.conditions=remoteChar.conditions;changed=true;}
     }else if(char.mode==='DND'){
       if(remoteChar.HP&&remoteChar.HP.cur!=null&&remoteChar.HP.cur!==char.dnd.HP.cur){char.dnd.HP.cur=remoteChar.HP.cur;App.updateBarDOM(char,'hp');changed=true;}
     }
@@ -4451,6 +4567,542 @@ const FB={
   },
 };
 
+/* ===== KP CONSOLE CONTROLLER ===== */
+const KP={
+  _selType:'self',      // 'self'|'player'|'npc'
+  _selId:null,
+  _activeTab:'status',
+  _judgeChar:null,      // null = use App.char for dice
+  _dropOpen:false,
+  _playerCards:{},      // playerId → full playerCard from Firebase
+  _cardListenerFn:null,
+  _syncDebounce:null,
+
+  getNpcs(){return S._g('kp_npcs_'+(FB.roomId||'_local'))||[];},
+  saveNpcs(npcs){S._s('kp_npcs_'+(FB.roomId||'_local'),npcs);},
+
+  startListening(){
+    if(!FB.db||!FB.roomId||this._cardListenerFn)return;
+    const ref=FB.db.ref(`rooms/${FB.roomId}/playerCards`);
+    this._cardListenerFn=ref.on('value',snap=>{
+      this._playerCards=snap.val()||{};
+      if(this._selType==='player')this.renderConsole();
+    });
+  },
+
+  stopListening(){
+    if(this._cardListenerFn&&FB.db&&FB.roomId){
+      try{FB.db.ref(`rooms/${FB.roomId}/playerCards`).off('value',this._cardListenerFn);}catch(e){}
+    }
+    this._cardListenerFn=null;
+    this._playerCards={};
+  },
+
+  // Convert Firebase playerCard to standard char object
+  _cardToChar(playerId){
+    const card=this._playerCards[playerId]||{};
+    const memberChar=FB.members[playerId]?.char||{};
+    const a=card.attributes||{};
+    const d=card.derivedStats||{};
+    return{
+      id:'player_'+playerId,name:card.characterName||playerId,mode:'COC',
+      _isNpc:false,_playerId:playerId,
+      avatar:memberChar.avatar||card.avatar||'',
+      occupation:card.occupation||'',background:card.background||'',
+      inventory:card.inventory||[],
+      coc:{
+        STR:a.STR||0,DEX:a.DEX||0,CON:a.CON||0,SIZ:a.SIZ||0,
+        APP:a.APP||0,INT:a.INT||0,POW:a.POW||0,EDU:a.EDU||0,LCK:a.LCK||0,
+        // live HP/SAN/MP from members node (updated by Fix 1)
+        HP:memberChar.HP||{cur:d.HP||0,max:d.maxHP||0},
+        SAN:memberChar.SAN||{cur:d.SAN||0,max:d.maxSAN||0},
+        MP:memberChar.MP||{cur:d.MP||0,max:d.maxMP||0},
+        madness:memberChar.madness||card.madness||{},
+        conditions:memberChar.conditions||card.conditions||{},
+        skills:(card.skills||[]).map(sk=>({
+          id:sk.name,name:sk.name,
+          base:sk.base||0,prof:sk.occupation||0,interest:sk.interest||0
+        })),
+        cthulhuMythos:0,
+        weapons:card.weapons||[],
+      }
+    };
+  },
+
+  getEffectiveChar(){
+    if(this._selType==='player'&&this._selId)return this._cardToChar(this._selId);
+    if(this._selType==='npc'&&this._selId){
+      const npc=this.getNpcs().find(n=>n.id===this._selId);
+      return npc||null;
+    }
+    return null;
+  },
+
+  selectChar(type,id){
+    this._selType=type;this._selId=id;
+    this._judgeChar=this.getEffectiveChar();
+    this._dropOpen=false;
+    this.renderConsole();
+    App.refreshSkillCheck();App.refreshCombatArena();
+    this._updateActiveIndicator();
+  },
+
+  _updateActiveIndicator(){
+    const el=document.getElementById('kpActiveIndicator');
+    const nm=document.getElementById('kpActiveIndicatorName');
+    if(!el)return;
+    const eff=this._judgeChar;
+    if(eff){el.classList.add('visible');if(nm)nm.textContent=eff.name;}
+    else{el.classList.remove('visible');}
+  },
+
+  renderConsole(){
+    const panel=document.getElementById('charPanel');if(!panel)return;
+    panel.innerHTML=this._genConsoleHtml();
+    this._bindConsoleEvents();
+  },
+
+  _selName(){
+    if(this._selType==='self')return FB.playerName||'KP';
+    if(this._selType==='player'&&this._selId){
+      const c=this._playerCards[this._selId];return c?.characterName||this._selId;
+    }
+    if(this._selType==='npc'&&this._selId){
+      return this.getNpcs().find(n=>n.id===this._selId)?.name||'NPC';
+    }
+    return'KP';
+  },
+
+  _selAvatar(){
+    if(this._selType==='player'&&this._selId){
+      return FB.members[this._selId]?.char?.avatar||this._playerCards[this._selId]?.avatar||'';
+    }
+    if(this._selType==='npc'&&this._selId){
+      return this.getNpcs().find(n=>n.id===this._selId)?.avatar||'';
+    }
+    return App.char?.avatar||'';
+  },
+
+  _genConsoleHtml(){
+    const nm=this._selName(),av=this._selAvatar();
+    const avBg=av?'transparent':nameHashColor(nm);
+    const avCont=av?`<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`<span>${(nm[0]||'?').toUpperCase()}</span>`;
+    const typeLabel={self:'KP',player:'玩家',npc:'NPC'}[this._selType];
+    const dropHtml=this._dropOpen?this._genDropdownHtml():'';
+    const tabs=['status','attrs','inventory','background'];
+    const tabLabels={status:'状态',attrs:'属性技能',inventory:'背包',background:'背景'};
+    const char=this.getEffectiveChar()||App.char;
+    return`<div class="kp-console" data-char-type="${this._selType}">
+      <div class="kp-char-selector" id="kpSelBtn">
+        <div class="kp-sel-avatar" style="background:${avBg}">${avCont}</div>
+        <div class="kp-sel-info">
+          <div class="kp-sel-name">${esc(nm)}</div>
+          <span class="kp-sel-type ${this._selType}">${typeLabel}</span>
+        </div>
+        <span class="kp-sel-arrow${this._dropOpen?' open':''}">▾</span>
+      </div>
+      ${dropHtml}
+      <div class="kp-tabs">${tabs.map(t=>`<button class="kp-tab${this._activeTab===t?' active':''}" data-kptab="${t}">${tabLabels[t]}</button>`).join('')}</div>
+      <div class="kp-tab-content">${this._genTabContent(char)}</div>
+    </div>`;
+  },
+
+  _genDropdownHtml(){
+    const npcs=this.getNpcs();
+    let html=`<div class="kp-char-dropdown" id="kpCharDrop">`;
+    // Self
+    const selfNm=FB.playerName||'KP';
+    html+=`<div class="kp-drop-group-hdr">── KP ──</div>
+      <div class="kp-drop-item${this._selType==='self'?' active':''}" data-sel-type="self">
+        <div class="kp-drop-avatar" style="background:${nameHashColor(selfNm)}">${(selfNm[0]||'K').toUpperCase()}</div>
+        <span class="kp-drop-name">${esc(selfNm)}</span>
+        <span class="kp-drop-id">（KP自身）</span>
+      </div>`;
+    // Players
+    const pids=Object.keys(this._playerCards).filter(p=>p!==FB.playerName).sort();
+    if(pids.length){
+      html+=`<div class="kp-drop-group-hdr">── 玩家角色 ──</div>`;
+      for(const pid of pids){
+        const card=this._playerCards[pid];
+        const nm=card?.characterName||pid;
+        const av=FB.members[pid]?.char?.avatar||card?.avatar||'';
+        const avBg=av?'transparent':nameHashColor(pid);
+        const avCont=av?`<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:(nm[0]||'?').toUpperCase();
+        const isActive=this._selType==='player'&&this._selId===pid;
+        const m=FB.members[pid];
+        const isOnline=m&&(m.online!==false||(Date.now()-(m.lastSeen||m.ts||0))<=30000);
+        const dotClr=isOnline?'var(--green)':'var(--dim)';
+        html+=`<div class="kp-drop-item${isActive?' active':''}" data-sel-type="player" data-sel-id="${esc(pid)}">
+          <div class="kp-drop-avatar" style="background:${avBg}">${avCont}</div>
+          <span class="kp-drop-name">${esc(nm)}</span>
+          <span class="kp-drop-id">@${esc(pid)}</span>
+          <span style="width:6px;height:6px;border-radius:50%;background:${dotClr};flex-shrink:0;display:inline-block"></span>
+        </div>`;
+      }
+    }
+    // NPCs
+    html+=`<div class="kp-drop-group-hdr">── NPC ──</div>`;
+    for(const npc of npcs){
+      const isActive=this._selType==='npc'&&this._selId===npc.id;
+      const avBg=npc.avatar?'transparent':nameHashColor(npc.name);
+      const avCont=npc.avatar?`<img src="${npc.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:(npc.name[0]||'N').toUpperCase();
+      html+=`<div class="kp-drop-item${isActive?' active':''}" data-sel-type="npc" data-sel-id="${esc(npc.id)}">
+        <div class="kp-drop-avatar" style="background:${avBg}">${avCont}</div>
+        <span class="kp-drop-name">${esc(npc.name)}</span>
+        <button class="kp-drop-del" data-del-npc="${esc(npc.id)}" title="删除NPC">✕</button>
+      </div>`;
+    }
+    html+=`<div class="kp-drop-item kp-drop-add" data-action="add-npc">＋ 导入新 NPC</div></div>`;
+    return html;
+  },
+
+  _genTabContent(char){
+    if(!char)return'<div class="empty">无角色数据</div>';
+    switch(this._activeTab){
+      case'status':return this._genStatusTab(char);
+      case'attrs':return this._genAttrsTab(char);
+      case'inventory':return this._genInventoryTab(char);
+      case'background':return this._genBackgroundTab(char);
+      default:return'';
+    }
+  },
+
+  _genStatusTab(char){
+    if(!char.coc)return'<div class="empty">非COC角色</div>';
+    const c=char.coc;
+    const hp=c.HP||{cur:0,max:0},san=c.SAN||{cur:0,max:0},mp=c.MP||{cur:0,max:0};
+    const mad=c.madness||{},cond=c.conditions||{};
+    const bar=(id,lbl,cur,max,fillCls)=>{
+      const pct=max>0?clamp(cur/max*100,0,100):0;
+      return`<div class="kp-bar-block">
+        <div class="kp-bar-lbl">${lbl}</div>
+        <div class="kp-bar-ctrl">
+          <button class="kp-adj" data-kpadj="${id}" data-d="-1">−</button>
+          <input class="kp-bar-inp" id="kpInp_${id}_cur" type="number" value="${cur}" min="0" max="${max}" data-kpinp="${id}" data-field="cur">
+          <span class="kp-bar-sep">/</span>
+          <input class="kp-bar-inp" id="kpInp_${id}_max" type="number" value="${max}" min="0" data-kpinp="${id}" data-field="max">
+          <button class="kp-adj" data-kpadj="${id}" data-d="1">+</button>
+        </div>
+        <div class="kp-bar-track"><div class="kp-bar-fill ${fillCls}" id="kpBar_${id}" style="width:${pct}%"></div></div>
+      </div>`;
+    };
+    const condTags=[
+      ['majorWound','重伤',cond.majorWound],['unconscious','昏迷',cond.unconscious],
+      ['temporary','临时疯狂',mad.temporary],['indefinite','不定期疯狂',mad.indefinite],
+      ['permInsanity','永久疯狂',cond.permInsanity]
+    ].map(([k,l,a])=>`<span class="kp-cond-tag${a?' active':''}" data-kpcond="${k}">${l}</span>`).join('');
+    return bar('hp','HP',hp.cur,hp.max,'hp')+bar('san','SAN',san.cur,san.max,'san')+bar('mp','MP',mp.cur,mp.max,'mp')
+      +`<div class="kp-cond-row">${condTags}</div>`;
+  },
+
+  _genAttrsTab(char){
+    if(!char.coc)return'<div class="empty">非COC角色</div>';
+    const c=char.coc,isPlayer=this._selType==='player';
+    const ex=cocExtras(c);
+    const ATTRS=[['STR','力量'],['DEX','敏捷'],['CON','体质'],['SIZ','体型'],
+                 ['APP','外貌'],['INT','智力'],['POW','意志'],['EDU','教育'],['LCK','幸运']];
+    const attrGrid=ATTRS.map(([k])=>{
+      const v=c[k]??0;
+      const clr=v>=85?'color:var(--gold-bright)':v>=70?'color:#c084fc':'';
+      return`<div class="kp-attr-cell">
+        <div class="kp-attr-key">${k}</div>
+        <div class="kp-attr-val${!isPlayer?' editable':''}" style="${clr}" ${!isPlayer?`data-kpattr="${k}" title="点击编辑"`:''}>${v}</div>
+      </div>`;
+    }).join('');
+    const extraGrid=[['DB',ex.db],['体格',ex.build],['闪避',ex.dodge]].map(([k,v])=>
+      `<div class="kp-attr-cell"><div class="kp-attr-key">${k}</div><div class="kp-attr-val">${v}</div></div>`).join('');
+    const skills=c.skills||[];
+    const skillRows=skills.map(sk=>{
+      const tot=(sk.base||0)+(sk.prof||0)+(sk.interest||0);if(!tot)return'';
+      return`<div class="kp-skill-row">
+        <span class="kp-skill-name">${esc(sk.name)}</span>
+        <span class="kp-skill-val">${tot}</span>
+        <span class="kp-skill-half">${fl(tot/2)}</span>
+        <span class="kp-skill-fifth">${fl(tot/5)}</span>
+        <span class="kp-skill-judge" data-judge-sk="${esc(sk.name)}" data-judge-val="${tot}">▶ 判定</span>
+      </div>`;
+    }).join('');
+    return`${isPlayer?'<div class="kp-readonly-note">玩家属性由玩家管理，此处只读</div>':''}
+      <div class="kp-sec-hdr">基础属性</div>
+      <div class="kp-attr-grid">${attrGrid}${extraGrid}</div>
+      ${skills.length?`<div class="kp-sec-hdr">技能列表 <span style="color:rgba(201,168,76,.4);font-weight:normal">点击▶快速判定</span></div>
+      <div class="kp-skill-list">${skillRows}</div>`:''}`;
+  },
+
+  _genInventoryTab(char){
+    const inv=char.inventory||[],isPlayer=this._selType==='player';
+    const itemsHtml=inv.length?inv.map((item,i)=>`<div class="cp-inv-item">
+      <span class="cp-inv-n">${esc(item.name)}</span>
+      <span class="cp-inv-q">×${item.qty}</span>
+      ${!isPlayer?`<span class="cp-inv-del" data-kpdel="${i}">✕</span>`:''}
+    </div>`).join(''):'<div class="empty" style="font-size:11px;padding:8px 0">背包为空</div>';
+    const addForm=!isPlayer?`<div class="cp-inv-add" style="margin-top:8px">
+      <input type="text" id="kpInvName" placeholder="物品名称">
+      <input type="number" id="kpInvQty" value="1" min="1" class="cp-inv-add-qty">
+      <button class="btn primary" id="kpBtnAddInv" style="padding:3px 8px;font-size:12px">+</button>
+    </div>`:'';
+    return`${isPlayer?'<div class="kp-readonly-note">玩家背包只读</div>':''}
+      <div class="cp-inv-list">${itemsHtml}</div>${addForm}`;
+  },
+
+  _genBackgroundTab(char){
+    const isPlayer=this._selType==='player';
+    const bg=char.background||'';
+    if(isPlayer)return`<div class="kp-readonly-note">玩家背景故事只读</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap">${esc(bg)||'<span style="color:var(--dim)">（暂无背景故事）</span>'}</div>`;
+    return`<textarea id="kpBgEdit" style="width:100%;min-height:140px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--r);padding:7px;font-family:inherit;font-size:12px;resize:vertical;box-sizing:border-box">${esc(bg)}</textarea>`;
+  },
+
+  _bindConsoleEvents(){
+    const char=this.getEffectiveChar()||App.char;
+    // Selector toggle
+    document.getElementById('kpSelBtn')?.addEventListener('click',e=>{
+      if(e.target.closest('[data-del-npc],[data-sel-type],[data-action]'))return;
+      this._dropOpen=!this._dropOpen;this.renderConsole();
+    });
+    // Dropdown selections
+    document.querySelectorAll('[data-sel-type]').forEach(item=>{
+      item.addEventListener('click',()=>{
+        const type=item.dataset.selType,id=item.dataset.selId||null;
+        this.selectChar(type,id);
+      });
+    });
+    // Delete NPC
+    document.querySelectorAll('[data-del-npc]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const id=btn.dataset.delNpc;if(!confirm('删除此NPC？'))return;
+        const npcs=this.getNpcs().filter(n=>n.id!==id);this.saveNpcs(npcs);
+        if(this._selId===id)this.selectChar('self',null);else this.renderConsole();
+      });
+    });
+    // Add NPC
+    document.querySelector('[data-action="add-npc"]')?.addEventListener('click',()=>{
+      this._dropOpen=false;this._showNpcModal();
+    });
+    // Tab switching
+    document.querySelectorAll('[data-kptab]').forEach(tab=>{
+      tab.addEventListener('click',()=>{this._activeTab=tab.dataset.kptab;this.renderConsole();});
+    });
+    // Status tab events
+    if(this._activeTab==='status')this._bindStatusEvents(char);
+    // Attrs tab events (NPC only)
+    if(this._activeTab==='attrs'&&this._selType!=='player')this._bindAttrEvents(char);
+    // Skills judge buttons
+    document.querySelectorAll('[data-judge-sk]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const sk=btn.dataset.judgeSk,val=parseInt(btn.dataset.judgeVal)||0;
+        this._triggerSkillJudge(sk,val);
+      });
+    });
+    // Inventory events (NPC/self only)
+    if(this._activeTab==='inventory'&&this._selType!=='player')this._bindInventoryEvents(char);
+    // Background edit (NPC/self only)
+    if(this._activeTab==='background'&&this._selType!=='player'){
+      document.getElementById('kpBgEdit')?.addEventListener('input',e=>{
+        char.background=e.target.value;this._saveCharData(char);
+      });
+    }
+  },
+
+  _bindStatusEvents(char){
+    // Adj buttons
+    document.querySelectorAll('[data-kpadj]').forEach(btn=>{
+      btn.addEventListener('click',()=>this._adjustBarKP(char,btn.dataset.kpadj,parseInt(btn.dataset.d)));
+    });
+    // Direct input
+    document.querySelectorAll('[data-kpinp]').forEach(inp=>{
+      inp.addEventListener('change',()=>{
+        const id=inp.dataset.kpinp,field=inp.dataset.field,v=parseInt(inp.value)||0;
+        if(!char.coc)return;
+        const blk={hp:char.coc.HP,san:char.coc.SAN,mp:char.coc.MP}[id];
+        if(!blk)return;
+        if(field==='cur')blk.cur=Math.max(0,Math.min(blk.max,v));
+        else blk.max=Math.max(0,v);
+        this._updateBarDOM(char,id);this._saveAndSync(char);
+      });
+    });
+    // Condition tags
+    document.querySelectorAll('[data-kpcond]').forEach(tag=>{
+      tag.addEventListener('click',()=>{
+        if(!char.coc)return;
+        const k=tag.dataset.kpcond;
+        if(k==='temporary'||k==='indefinite'){
+          if(!char.coc.madness)char.coc.madness={};
+          char.coc.madness[k]=!char.coc.madness[k];
+          tag.classList.toggle('active',!!char.coc.madness[k]);
+        }else{
+          if(!char.coc.conditions)char.coc.conditions={};
+          char.coc.conditions[k]=!char.coc.conditions[k];
+          tag.classList.toggle('active',!!char.coc.conditions[k]);
+        }
+        this._saveAndSync(char);
+      });
+    });
+  },
+
+  _adjustBarKP(char,id,d){
+    if(!char.coc)return;
+    const blk={hp:char.coc.HP,san:char.coc.SAN,mp:char.coc.MP}[id];
+    if(!blk)return;
+    blk.cur=clamp((blk.cur||0)+d,0,blk.max||0);
+    this._updateBarDOM(char,id);
+    // Update input
+    const inp=document.getElementById(`kpInp_${id}_cur`);
+    if(inp)inp.value=blk.cur;
+    this._saveAndSync(char);
+  },
+
+  _updateBarDOM(char,id){
+    const el=document.getElementById(`kpBar_${id}`);if(!el||!char.coc)return;
+    const blk={hp:char.coc.HP,san:char.coc.SAN,mp:char.coc.MP}[id];if(!blk)return;
+    el.style.width=(blk.max>0?clamp(blk.cur/blk.max*100,0,100):0)+'%';
+  },
+
+  _saveAndSync(char){
+    if(this._selType==='npc'){
+      this._saveCharData(char);
+    }else if(this._selType==='player'&&this._selId){
+      const pid=this._selId;
+      // Update local members cache for immediate visual
+      if(FB.members[pid]&&char.coc){
+        if(!FB.members[pid].char)FB.members[pid].char={};
+        if(char.coc.HP)FB.members[pid].char.HP={...char.coc.HP};
+        if(char.coc.SAN)FB.members[pid].char.SAN={...char.coc.SAN};
+        if(char.coc.MP)FB.members[pid].char.MP={...char.coc.MP};
+        if(char.coc.madness)FB.members[pid].char.madness={...char.coc.madness};
+        if(char.coc.conditions)FB.members[pid].char.conditions={...char.coc.conditions};
+      }
+      // Debounce Firebase write
+      clearTimeout(this._syncDebounce);
+      this._syncDebounce=setTimeout(()=>{
+        if(!FB.db||!FB.roomId)return;
+        const upd={};
+        if(char.coc?.HP){upd['char/HP/cur']=char.coc.HP.cur;upd['char/HP/max']=char.coc.HP.max;}
+        if(char.coc?.SAN){upd['char/SAN/cur']=char.coc.SAN.cur;upd['char/SAN/max']=char.coc.SAN.max;}
+        if(char.coc?.MP){upd['char/MP/cur']=char.coc.MP.cur;upd['char/MP/max']=char.coc.MP.max;}
+        if(char.coc?.madness)upd['char/madness']=char.coc.madness;
+        if(char.coc?.conditions)upd['char/conditions']=char.coc.conditions;
+        FB.db.ref(`rooms/${FB.roomId}/players/${pid}`).update(upd).catch(()=>{});
+      },300);
+    }else if(this._selType==='self'){
+      const ac=App.char;if(!ac||!char.coc)return;
+      if(char.coc.HP)ac.coc.HP={...char.coc.HP};
+      if(char.coc.SAN)ac.coc.SAN={...char.coc.SAN};
+      if(char.coc.MP)ac.coc.MP={...char.coc.MP};
+      if(char.coc.madness)ac.coc.madness={...char.coc.madness};
+      if(char.coc.conditions)ac.coc.conditions={...char.coc.conditions};
+      App.save();if(FB.roomId)FB.syncPlayer();
+    }
+  },
+
+  _saveCharData(char){
+    if(this._selType!=='npc')return;
+    const npcs=this.getNpcs();
+    const idx=npcs.findIndex(n=>n.id===this._selId);
+    if(idx>=0){npcs[idx]=char;this.saveNpcs(npcs);}
+  },
+
+  _bindAttrEvents(char){
+    document.querySelectorAll('[data-kpattr]').forEach(el=>{
+      el.addEventListener('click',()=>{
+        if(el.querySelector('input'))return;
+        const k=el.dataset.kpattr,cur=char.coc?.[k]??0;
+        const inp=document.createElement('input');
+        inp.type='number';inp.value=cur;
+        inp.style.cssText='width:100%;border:none;background:transparent;color:var(--text);font-size:17px;font-family:var(--font-num);font-weight:600;text-align:center;outline:none';
+        el.textContent='';el.appendChild(inp);inp.focus();inp.select();
+        const commit=()=>{
+          const v=parseInt(inp.value)||0;
+          if(char.coc){char.coc[k]=v;this._saveCharData(char);}
+          el.textContent=v;
+        };
+        inp.addEventListener('blur',commit,{once:true});
+        inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+      });
+    });
+  },
+
+  _bindInventoryEvents(char){
+    document.querySelectorAll('[data-kpdel]').forEach(el=>{
+      el.addEventListener('click',()=>{
+        if(!char.inventory)return;
+        char.inventory.splice(parseInt(el.dataset.kpdel),1);
+        this._saveCharData(char);this.renderConsole();
+      });
+    });
+    document.getElementById('kpBtnAddInv')?.addEventListener('click',()=>{
+      const nm=document.getElementById('kpInvName')?.value.trim();if(!nm)return;
+      const qty=parseInt(document.getElementById('kpInvQty')?.value)||1;
+      if(!char.inventory)char.inventory=[];
+      char.inventory.push({id:uid(),name:nm,qty,notes:''});
+      this._saveCharData(char);this.renderConsole();
+    });
+  },
+
+  _triggerSkillJudge(skName,skVal){
+    // Switch to dice tab then select this skill in the dropdown
+    document.querySelector('.nav-tab[data-tab="dice"]')?.click();
+    setTimeout(()=>{
+      const sel=document.getElementById('skillCheckSel');if(!sel)return;
+      const opt=Array.from(sel.options).find(o=>o.text.startsWith(skName));
+      if(opt)sel.value=opt.value;
+    },80);
+  },
+
+  _showNpcModal(){
+    const modal=document.createElement('div');
+    modal.className='kp-modal-overlay';
+    modal.innerHTML=`<div class="kp-modal">
+      <div class="kp-modal-title">导入 NPC</div>
+      <div class="kp-modal-tabs">
+        <button class="kp-modal-tab active" data-mtab="text">粘贴文本</button>
+        <button class="kp-modal-tab" data-mtab="blank">空白新建</button>
+      </div>
+      <input id="kpNpcName" class="fb-join-input" placeholder="NPC名称" maxlength="20" style="margin-bottom:8px">
+      <div id="kpModalExtra">
+        <textarea id="kpNpcText" placeholder="粘贴角色卡文本，自动解析属性和技能…" style="width:100%;min-height:90px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.07);border-radius:6px;padding:8px;color:var(--text);font-family:inherit;font-size:12px;resize:vertical;box-sizing:border-box"></textarea>
+      </div>
+      <div class="kp-modal-sep"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn primary" id="kpModalOk" style="flex:1">确认</button>
+        <button class="btn" id="kpModalCancel" style="flex:0;padding:5px 16px">取消</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+    let mode='text';
+    modal.querySelectorAll('[data-mtab]').forEach(t=>{
+      t.addEventListener('click',()=>{
+        modal.querySelectorAll('[data-mtab]').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');mode=t.dataset.mtab;
+        const extra=document.getElementById('kpModalExtra');
+        if(extra)extra.style.display=mode==='blank'?'none':'';
+      });
+    });
+    document.getElementById('kpModalCancel')?.addEventListener('click',()=>modal.remove());
+    modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+    document.getElementById('kpModalOk')?.addEventListener('click',()=>{
+      const nm=(document.getElementById('kpNpcName')?.value||'').trim()||'NPC';
+      let npc=newChar(nm,'COC');npc._isNpc=true;
+      if(mode==='text'){
+        const txt=document.getElementById('kpNpcText')?.value||'';
+        const p=parseChar(txt,'COC');
+        ['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'].forEach(k=>{if(p[k]!=null)npc.coc[k]=p[k];});
+        const dv=cocDerived(npc.coc);
+        npc.coc.HP={cur:dv.hpMax,max:dv.hpMax};
+        npc.coc.MP={cur:dv.mpMax,max:dv.mpMax};
+        npc.coc.SAN={cur:npc.coc.POW||50,max:dv.sanMax};
+        if(p._skills?.length)npc.coc.skills=p._skills;
+        npc.name=nm;
+      }
+      const npcs=this.getNpcs();npcs.push(npc);this.saveNpcs(npcs);
+      modal.remove();this.selectChar('npc',npc.id);
+    });
+    document.getElementById('kpNpcName')?.focus();
+  },
+};
+
 /* ===== GRADE BADGE + SECRET ROLL HELPERS ===== */
 function _gradeLevel(grade){
   if(!grade)return 0;
@@ -4492,7 +5144,10 @@ function _showKPTools(show){
 const _fbOrigPushHist=S.pushHist.bind(S);
 S.pushHist=function(e){
   if(!e.fromFB&&FB.isKP&&_isSecretRoll){
-    e={...e, isSecret:true, channel:e.channel||FB.activeCh};
+    e={...e,isSecret:true,channel:e.channel||FB.activeCh};
+  }
+  if(!e.fromFB&&FB.isKP&&FB.roomId&&KP._selType==='npc'){
+    e={...e,isNpc:true};
   }
   _fbOrigPushHist(e);
   if(!e.fromFB)FB.pushRoll(e);
@@ -4501,6 +5156,49 @@ S.pushHist=function(e){
 // Hook App.adjustBar: sync player status after HP/SAN changes
 const _fbPrevAdjBar=App.adjustBar.bind(App);
 App.adjustBar=function(...args){_fbPrevAdjBar(...args);FB.syncPlayer();};
+
+// ── Player card auto-sync to Firebase playerCards node ──────────────────────
+function _buildPlayerCard(char){
+  if(!char||char.mode!=='COC')return null;
+  const c=char.coc;const d=cocDerived(c);const ex=cocExtras(c);
+  const pid=FB.playerName||'';
+  return{
+    characterName:char.name||'',playerId:pid,
+    occupation:char.occupation||'',gender:char.gender||'',age:char.age||'',
+    avatar:char._avatarCompressed||'',
+    attributes:{STR:c.STR||0,DEX:c.DEX||0,CON:c.CON||0,SIZ:c.SIZ||0,
+      APP:c.APP||0,INT:c.INT||0,POW:c.POW||0,EDU:c.EDU||0,LCK:c.LCK||0},
+    derivedStats:{HP:c.HP?.cur??0,maxHP:c.HP?.max??d.hpMax,
+      SAN:c.SAN?.cur??0,maxSAN:c.SAN?.max??d.sanMax,
+      MP:c.MP?.cur??0,maxMP:c.MP?.max??d.mpMax,
+      DB:ex.db,build:ex.build,MOV:ex.mov||8},
+    skills:(c.skills||[]).map(sk=>({name:sk.name,base:sk.base||0,
+      occupation:sk.prof||0,interest:sk.interest||0,
+      total:(sk.base||0)+(sk.prof||0)+(sk.interest||0)})),
+    inventory:char.inventory||[],
+    background:char.background||'',
+    weapons:c.weapons||[],
+    madness:c.madness||{},
+    conditions:c.conditions||{},
+    lastUpdate:Date.now()
+  };
+}
+let _playerCardSyncTimer=null;
+function _syncPlayerCard(){
+  if(!FB.roomId||!FB.db||FB.isKP||!FB.playerName)return;
+  const char=App.char;if(!char||char.mode!=='COC')return;
+  const card=_buildPlayerCard(char);if(!card)return;
+  try{FB.db.ref(`rooms/${FB.roomId}/playerCards/${FB.playerName}`).set(card).catch(()=>{});}catch(e){}
+}
+// Wrap App.save: schedule card sync for non-KP players in a room (1000ms debounce)
+const _origAppSave=App.save.bind(App);
+App.save=function(){
+  _origAppSave();
+  if(!FB.isKP&&FB.roomId){
+    clearTimeout(_playerCardSyncTimer);
+    _playerCardSyncTimer=setTimeout(_syncPlayerCard,1000);
+  }
+};
 
 document.addEventListener('DOMContentLoaded',()=>{
   spawnStars();FB.init();FB.bindUI();App.init();
