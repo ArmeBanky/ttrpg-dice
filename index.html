@@ -1221,6 +1221,12 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 .fb-mbr-bar-fill.san{background:#3b82f6}
 /* Feature 1: grade badge in history */
 .hist-grade-badge{font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;display:inline-block;flex-shrink:0;line-height:1.7}
+/* Fix 2: bonus/penalty modifier tags in history */
+.hist-mod-tag{font-size:10px;padding:1px 5px;border-radius:3px;display:inline-flex;align-items:center;gap:2px;flex-shrink:0;font-weight:600;line-height:1.7}
+.hist-mod-tag.bonus{background:rgba(46,204,113,.15);color:var(--green)}
+.hist-mod-tag.penalty{background:rgba(192,57,43,.15);color:var(--red-b)}
+.hist-mod-rolls{font-size:10px;color:var(--dim);margin-left:2px}
+.hist-mod-rolls b{color:var(--text);font-weight:700}
 /* Feature 2: secret roll toggle */
 .secret-toggle{font-size:11px;padding:0 10px;height:32px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--dim);cursor:pointer;transition:background .2s,border-color .2s,color .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
 .secret-toggle:hover{color:var(--text)}
@@ -1236,6 +1242,20 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 .fb-ch-rename-inp{background:transparent;border:none;border-bottom:1.5px solid var(--gold);color:var(--text);font-size:12px;outline:none;padding:0 0 1px;font-family:inherit;flex:1;min-width:0;line-height:1}
 /* Fix 5: channel member count badge */
 .fb-ch-count{font-size:10px;background:rgba(255,255,255,.08);color:#666;border-radius:8px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 4px;flex-shrink:0;display:inline-block}
+/* Fix 3: member online status dot */
+.fb-mbr-avatar-wrap{position:relative;flex-shrink:0}
+.fb-mbr-dot{position:absolute;bottom:1px;right:1px;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--surface-solid)}
+/* Fix 1: Hide HP/SAN/MP +/- buttons for non-KP players in a room */
+body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
+/* Fix 1: KP member adj panel */
+.fb-mbr-adj-toggle{margin-left:auto;padding:1px 7px;border:1px solid rgba(255,255,255,.1);border-radius:3px;background:rgba(255,255,255,.05);cursor:pointer;font-size:11px;color:var(--dim);flex-shrink:0;line-height:1.6}
+.fb-mbr-adj-toggle:hover{color:var(--text);border-color:rgba(201,168,76,.4)}
+.fb-mbr-adj-panel{width:100%;padding:4px 0 2px;border-top:1px solid rgba(255,255,255,.05);margin-top:3px}
+.fb-mbr-adj-row{display:flex;align-items:center;gap:4px;padding:1px 0;font-size:11px}
+.fb-mbr-adj-row>span:first-child{width:22px;font-size:9px;color:var(--dim);flex-shrink:0;text-align:right}
+.fb-mbr-adj-btn{width:20px;height:18px;border:1px solid rgba(255,255,255,.1);border-radius:3px;background:rgba(255,255,255,.06);cursor:pointer;color:var(--text);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+.fb-mbr-adj-btn:hover{background:rgba(255,255,255,.14);border-color:rgba(201,168,76,.4)}
+.fb-mbr-adj-nums{flex:1;text-align:center;font-size:10px;color:var(--text);font-family:var(--font-num)}
 /* Fix 6: channel hierarchy */
 .fb-ch-item.ch-parent::before{content:'';position:absolute;left:-6px;top:4px;bottom:4px;width:2px;background:rgba(201,168,76,.35);border-radius:0 2px 2px 0}
 .fb-ch-item.ch-parent.active::before{background:var(--gold)}
@@ -2151,6 +2171,18 @@ function renderHistory(){
     // Feature 1: colored grade badge (replaces old hist-grade span)
     const badgeHtml=_gradeBadgeHtml(e.grade);
     const totalHtml=(e.total!==undefined&&e.total!==null)?`<span class="hist-msg-total">= ${e.total}</span>`:'';
+    // Fix 2: bonus/penalty modifier tag + all-results display
+    let modHtml='';
+    if(e.diceModifier==='bonus'||e.diceModifier==='penalty'){
+      const isBonus=e.diceModifier==='bonus';
+      const tagCls=isBonus?'bonus':'penalty';
+      const tagIcon=isBonus?'🟢':'🔴';
+      const tagLbl=isBonus?'奖励':'惩罚';
+      const allR=Array.isArray(e.allResults)?e.allResults:[];
+      const used=e.usedResult!=null?e.usedResult:e.total;
+      const rollsStr=allR.length>1?allR.map(r=>r===used?`<b>${r}</b>`:String(r)).join(', '):'';
+      modHtml=`<span class="hist-mod-tag ${tagCls}">${tagIcon} ${tagLbl}</span>${rollsStr?`<span class="hist-mod-rolls">(${rollsStr})</span>`:''}`;
+    }
     // Channel tag: show colored dot for KP multi-channel view
     let chHtml='';
     if(e.channel){
@@ -2176,7 +2208,7 @@ function renderHistory(){
         </div>
         ${e.label?`<div class="hist-msg-text">${esc(e.label)}</div>`:''}
         ${diceHtml}
-        <div class="hist-msg-results">${resHtml}${badgeHtml}${totalHtml}</div>
+        <div class="hist-msg-results">${resHtml}${modHtml}${badgeHtml}${totalHtml}</div>
       </div>
     </div>`;
   }
@@ -2871,6 +2903,8 @@ const App={
       const roll=(tens===0&&ones===0)?100:tens+ones;
       const tensDisp=tensArr.map(t=>t===0?'00':String(t)).join(',');
       const advNote=adv!=='normal'?` [十位:${tensDisp} 个位:${ones}]`:'';
+      const diceModifier=bonusN>0?'bonus':penaltyN>0?'penalty':'normal';
+      const allResults=tensArr.map(t=>(t===0&&ones===0)?100:t+ones);
       SFX.roll();
       const el=document.getElementById('skillCheckResult');
       const ATTR_NAMES={STR:'力量',DEX:'敏捷',CON:'体质',INT:'智力',POW:'意志',APP:'外貌',SIZ:'体型',EDU:'教育',LCK:'幸运'};
@@ -2880,14 +2914,14 @@ const App={
         const cls=ok?'cr-ok':'cr-fumb';
         _showSkResult(el,cls,ok?'✓ 成功':'✕ 失败',`SAN判定 — ${roll} / ${sanCur}${advNote}`);
         setTimeout(()=>SFX.grade(ok?'成功':'失败'),320);
-        S.pushHist({ts:Date.now(),label:'SAN判定',dice:[`D100=${roll}`],total:roll,grade:ok?'成功':'失败',skillName:'SAN',charId:char?.id,charName:char?.name});
+        S.pushHist({ts:Date.now(),label:'SAN判定',dice:[`D100=${roll}`],total:roll,grade:ok?'成功':'失败',skillName:'SAN',charId:char?.id,charName:char?.name,diceModifier,allResults,usedResult:roll});
       }else if(v.startsWith('attr:')){
         const parts=v.split(':'),attrKey=parts[1],attrVal=parseInt(parts[2])||0;
         const attrName=ATTR_NAMES[attrKey]||attrKey;
         const{grade,cls}=cocGrade(roll,attrVal);
         _showSkResult(el,cls,grade,`${attrName}(${attrKey}) — ${roll} / ${attrVal}${advNote}`);
         setTimeout(()=>SFX.grade(grade),320);
-        S.pushHist({ts:Date.now(),label:`${attrName}判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:attrName,charId:char?.id,charName:char?.name});
+        S.pushHist({ts:Date.now(),label:`${attrName}判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:attrName,charId:char?.id,charName:char?.name,diceModifier,allResults,usedResult:roll});
       }else if(v.startsWith('sk:')){
         const parts=v.split(':'),sid=parts[1],skVal=parseInt(parts[2])||0;
         const sk=(char.coc.skills||[]).find(s=>s.id===sid);
@@ -2895,7 +2929,7 @@ const App={
         const{grade,cls}=cocGrade(roll,skVal);
         _showSkResult(el,cls,grade,`${esc(skName)} — ${roll} / ${skVal}${advNote}`);
         setTimeout(()=>SFX.grade(grade),320);
-        S.pushHist({ts:Date.now(),label:`${skName}判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:skName,charId:char?.id,charName:char?.name});
+        S.pushHist({ts:Date.now(),label:`${skName}判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:skName,charId:char?.id,charName:char?.name,diceModifier,allResults,usedResult:roll});
       }
       startCooldown(nb,3,origHtml);
       renderHistory();
@@ -3091,24 +3125,30 @@ function buildDmgPreview(d){
 }
 
 /* ===== COOLDOWN UTILITY ===== */
+// Fix: capture button ID and look it up fresh each rAF frame so tab-switch re-renders
+// (which destroy/recreate the button DOM) don't leave the new button permanently disabled.
 function startCooldown(btn,secs,origHtml){
   if(!btn||btn.disabled)return;
+  const btnId=btn.id;
   const R=10,C=2*Math.PI*R;
   btn.disabled=true;btn.classList.add('cd-active');
-  const start=Date.now(),total=secs*1000;
+  const endTime=Date.now()+secs*1000;
   let lastTick=-1;
   const tick=()=>{
-    const elapsed=Date.now()-start;
-    if(elapsed>=total){
-      btn.disabled=false;btn.classList.remove('cd-active');btn.innerHTML=origHtml;return;
+    const livBtn=(btnId&&document.getElementById(btnId))||btn;
+    const remMs=endTime-Date.now();
+    if(remMs<=0){
+      livBtn.disabled=false;livBtn.classList.remove('cd-active');livBtn.innerHTML=origHtml;return;
     }
-    const remaining=Math.ceil((total-elapsed)/1000);
-    const offset=(C*(elapsed/total)).toFixed(1);
+    const elapsed=secs*1000-remMs;
+    const remaining=Math.ceil(remMs/1000);
+    const offset=(C*(elapsed/(secs*1000))).toFixed(1);
+    livBtn.disabled=true;livBtn.classList.add('cd-active');
     if(remaining!==lastTick){
       lastTick=remaining;
-      btn.innerHTML=`${remaining}<svg class="roll-cd-ring" width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="${R}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${offset}"/></svg>`;
+      livBtn.innerHTML=`${remaining}<svg class="roll-cd-ring" width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="${R}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${offset}"/></svg>`;
     }else{
-      const c=btn.querySelector('.roll-cd-ring circle');
+      const c=livBtn.querySelector('.roll-cd-ring circle');
       if(c)c.setAttribute('stroke-dashoffset',offset);
     }
     requestAnimationFrame(tick);
@@ -3496,6 +3536,8 @@ Object.assign(App,{
       const roll=(tens===0&&ones===0)?100:tens+ones;
       const tensDisp=tensArr.map(t=>t===0?'00':String(t)).join(',');
       const advNote=adv!=='normal'?` [十位:${tensDisp} 个位:${ones}]`:'';
+      const diceModifier=bonusN>0?'bonus':penaltyN>0?'penalty':'normal';
+      const allResults=tensArr.map(t=>(t===0&&ones===0)?100:t+ones);
       SFX.roll();
       const{grade,cls}=cocGrade(roll,val);
       setTimeout(()=>SFX.grade(grade),320);
@@ -3513,7 +3555,7 @@ Object.assign(App,{
         rc.classList.add('showing');
       }
       this._caAutoCalcDmg(char,wi,w,grade,isCounter);
-      S.pushHist({ts:Date.now(),label:`${w.name}战斗判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:w.name,charId:char?.id,charName:char?.name});
+      S.pushHist({ts:Date.now(),label:`${w.name}战斗判定`,dice:[`D100=${roll}`],total:roll,grade,skillName:w.name,charId:char?.id,charName:char?.name,diceModifier,allResults,usedResult:roll});
       renderHistory();
       startCooldown(btn,3,origHtml);
     });
@@ -3680,7 +3722,8 @@ const FB={
   channelList:{}, _kpChListeners:{}, _histFilterCh:'',
   _listeners:[], _rollRef:null, _rollListener:null,
   _playerRef:null, _hostRef:null, _membersCollapsed:false,
-  _subChCollapsed:false,
+  _subChCollapsed:false, _expandedKpPanels:new Set(), _kpAdjDebounce:{},
+  _heartbeatTimer:null,
 
   init(){
     try{
@@ -3711,9 +3754,9 @@ const FB={
       // Register player presence (include characterName for member list)
       this._playerRef=this.db.ref(`rooms/${this.roomId}/players/${this.playerName}`);
       const charSnap=this._charSnapshot();
-      await this._playerRef.set({online:true,ts:Date.now(),isKP:this.isKP,char:charSnap,
+      await this._playerRef.set({online:true,ts:Date.now(),lastSeen:Date.now(),isKP:this.isKP,char:charSnap,
         characterName:charSnap&&charSnap.name?charSnap.name:'',currentChannel:'general'});
-      this._playerRef.onDisconnect().remove();
+      this._playerRef.onDisconnect().update({online:false,lastSeen:Date.now()});
       // Ensure default channels exist (channelList metadata + channels data node)
       const clRef=this.db.ref(`rooms/${this.roomId}/channelList`);
       const clSnap=await clRef.once('value');
@@ -3744,6 +3787,10 @@ const FB={
         document.getElementById('fbSbKpTag')?.classList.remove('hidden');
       }
       _showKPTools(this.isKP);
+      if(!this.isKP)document.body.classList.add('fb-nonkp-room');
+      else document.body.classList.remove('fb-nonkp-room');
+      this._saveRoomState();
+      this._startHeartbeat();
       this._toast('已连接到 '+this.roomId+(this.isKP?' · 你是KP':''),'success');
     }catch(e){
       this._setDot('');
@@ -3753,6 +3800,9 @@ const FB={
   },
 
   leaveRoom(){
+    document.body.classList.remove('fb-nonkp-room');
+    this._stopHeartbeat();
+    this._clearRoomState();
     if(this.isKP&&this._hostRef){try{this._hostRef.remove();}catch(e){}this._hostRef=null;}
     if(this._playerRef){try{this._playerRef.remove();}catch(e){}this._playerRef=null;}
     for(const{ref,type,fn}of this._listeners){try{ref.off(type,fn);}catch(e){}}
@@ -3811,6 +3861,9 @@ const FB={
           judgementLevel:d.judgementLevel||0,
           skillName:d.skillName||'',
           channel:chName,
+          diceModifier:d.diceModifier||'normal',
+          allResults:d.allResults||[],
+          usedResult:d.usedResult!=null?d.usedResult:d.total||0,
           fromFB:true,
         });
         renderHistory();
@@ -3870,6 +3923,9 @@ const FB={
       judgementLevel:_gradeLevel(entry.grade||''),
       skillName:entry.skillName||'',
       channel:entry.channel||this.activeCh,
+      diceModifier:entry.diceModifier||'normal',
+      allResults:Array.isArray(entry.allResults)?entry.allResults:[],
+      usedResult:entry.usedResult!=null?entry.usedResult:entry.total||0,
     };
     if(entry.isSecret){
       try{
@@ -3991,6 +4047,9 @@ const FB={
             judgementLevel:d.judgementLevel||0,
             skillName:d.skillName||'',
             channel:chName,
+            diceModifier:d.diceModifier||'normal',
+            allResults:d.allResults||[],
+            usedResult:d.usedResult!=null?d.usedResult:d.total||0,
             fromFB:true,
           });
           renderHistory();
@@ -4005,8 +4064,26 @@ const FB={
     const fn=ref.on('value',snap=>{
       this.members=snap.val()||{};
       this._renderMembers();
+      // Non-KP: apply KP-driven HP/SAN/MP changes to local char
+      if(!this.isKP&&this.playerName){
+        const myData=this.members[this.playerName];
+        if(myData&&myData.char)this._applyRemoteCharUpdate(myData.char);
+      }
     });
     this._listeners.push({ref,type:'value',fn});
+  },
+
+  _applyRemoteCharUpdate(remoteChar){
+    const char=App.char;if(!char)return;
+    let changed=false;
+    if(char.mode==='COC'){
+      if(remoteChar.HP&&remoteChar.HP.cur!=null&&remoteChar.HP.cur!==char.coc.HP.cur){char.coc.HP.cur=remoteChar.HP.cur;App.updateBarDOM(char,'hp');changed=true;}
+      if(remoteChar.SAN&&remoteChar.SAN.cur!=null&&remoteChar.SAN.cur!==char.coc.SAN.cur){char.coc.SAN.cur=remoteChar.SAN.cur;App.updateBarDOM(char,'san');changed=true;}
+      if(remoteChar.MP&&remoteChar.MP.cur!=null&&remoteChar.MP.cur!==char.coc.MP.cur){char.coc.MP.cur=remoteChar.MP.cur;App.updateBarDOM(char,'mp');changed=true;}
+    }else if(char.mode==='DND'){
+      if(remoteChar.HP&&remoteChar.HP.cur!=null&&remoteChar.HP.cur!==char.dnd.HP.cur){char.dnd.HP.cur=remoteChar.HP.cur;App.updateBarDOM(char,'hp');changed=true;}
+    }
+    if(changed)App.save();
   },
 
   _renderChList(){
@@ -4104,7 +4181,13 @@ const FB={
     const el=document.getElementById('fbMembersList');
     const secLbl=document.getElementById('fbMbrSecLbl');
     if(!el)return;
-    const allEntries=Object.entries(this.members).filter(([,m])=>m);
+    const now=Date.now();
+    const allEntries=Object.entries(this.members).filter(([,m])=>{
+      if(!m)return false;
+      // Remove members offline > 5 minutes
+      if(m.online===false&&(now-(m.lastSeen||m.ts||0))>5*60*1000)return false;
+      return true;
+    });
     // Fix 3: non-KP sees only current channel members; KP sees all
     let displayEntries;
     if(this.isKP){
@@ -4115,8 +4198,8 @@ const FB={
         return m.currentChannel===this.activeCh;
       });
     }
-    const total=displayEntries.length;
-    if(secLbl)secLbl.textContent=`成员 (${total} 在线)`;
+    const onlineCount=allEntries.filter(([,m])=>m.online!==false||(now-(m.lastSeen||m.ts||0))<=30000).length;
+    if(secLbl)secLbl.textContent=`成员 (${onlineCount} 在线)`;
     // Sort KP first, then alphabetically
     displayEntries.sort(([na,ma],[nb,mb])=>{
       if(ma.isKP&&!mb.isKP)return -1;
@@ -4148,17 +4231,73 @@ const FB={
       const avatarContent=char&&char.avatar
         ?`<img src="${char.avatar}" style="width:100%;height:100%;object-fit:cover">`
         :`<span style="color:#fff;font-size:11px;font-weight:700">${(displayName[0]||'?').toUpperCase()}</span>`;
-      return`<div class="fb-mbr-item">
-        <div class="fb-mbr-avatar" style="background:${avatarBg}">${avatarContent}</div>
+      const age=now-(m.lastSeen||m.ts||0);
+      const dotColor=m.online!==false||age<=30000?'var(--green)':age<=5*60*1000?'var(--dim)':'transparent';
+      // KP adj panel for non-KP members
+      const safeId=playerName.replace(/[^a-zA-Z0-9]/g,'_');
+      let kpAdjRows='';
+      if(this.isKP&&!isThisKP&&char){
+        if(char.HP&&char.HP.max>0)kpAdjRows+=`<div class="fb-mbr-adj-row"><span>HP</span><button class="fb-mbr-adj-btn" data-kp-adj="${esc(playerName)}" data-atype="hp" data-d="-1">−</button><span class="fb-mbr-adj-nums">${char.HP.cur}/${char.HP.max}</span><button class="fb-mbr-adj-btn" data-kp-adj="${esc(playerName)}" data-atype="hp" data-d="1">+</button></div>`;
+        if(char.SAN&&char.SAN.max>0)kpAdjRows+=`<div class="fb-mbr-adj-row"><span>SAN</span><button class="fb-mbr-adj-btn" data-kp-adj="${esc(playerName)}" data-atype="san" data-d="-1">−</button><span class="fb-mbr-adj-nums">${char.SAN.cur}/${char.SAN.max}</span><button class="fb-mbr-adj-btn" data-kp-adj="${esc(playerName)}" data-atype="san" data-d="1">+</button></div>`;
+        if(char.MP&&char.MP.max>0)kpAdjRows+=`<div class="fb-mbr-adj-row"><span>MP</span><button class="fb-mbr-adj-btn" data-kp-adj="${esc(playerName)}" data-atype="mp" data-d="-1">−</button><span class="fb-mbr-adj-nums">${char.MP.cur}/${char.MP.max}</span><button class="fb-mbr-adj-btn" data-kp-adj="${esc(playerName)}" data-atype="mp" data-d="1">+</button></div>`;
+      }
+      const panelOpen=this._expandedKpPanels.has(playerName);
+      const kpAdjHtml=kpAdjRows?`<div class="fb-mbr-adj-panel${panelOpen?'':' hidden'}" id="fbAdj_${safeId}">${kpAdjRows}</div>`:'';
+      const adjToggle=kpAdjRows?`<button class="fb-mbr-adj-toggle" data-adj-toggle="${esc(playerName)}" title="调整数值">⚙</button>`:'';
+      return`<div class="fb-mbr-item" style="flex-wrap:wrap">
+        <div class="fb-mbr-avatar-wrap"><div class="fb-mbr-avatar" style="background:${avatarBg}">${avatarContent}</div><span class="fb-mbr-dot" style="background:${dotColor}"></span></div>
         <div class="fb-mbr-info">
           <div class="fb-mbr-charname">${esc(displayName)}</div>
           ${showPlayerId?`<div class="fb-mbr-playerid">${esc(playerName)}</div>`:''}
           ${chLabel}
         </div>
         ${isThisKP?`<span class="fb-mbr-kp-badge">KP</span>`:''}
+        ${adjToggle}
         ${barsHtml?`<div class="fb-mbr-bars">${barsHtml}</div>`:''}
+        ${kpAdjHtml}
       </div>`;
     }).join('');
+    // Bind KP adj toggle and buttons
+    el.querySelectorAll('[data-adj-toggle]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const pn=btn.dataset.adjToggle;
+        if(this._expandedKpPanels.has(pn))this._expandedKpPanels.delete(pn);
+        else this._expandedKpPanels.add(pn);
+        this._renderMembers();
+      });
+    });
+    el.querySelectorAll('[data-kp-adj]').forEach(adjBtn=>{
+      adjBtn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const pn=adjBtn.dataset.kpAdj;
+        const atype=adjBtn.dataset.atype;
+        const d=parseInt(adjBtn.dataset.d);
+        const m=this.members[pn];if(!m||!m.char)return;
+        const ch=m.char;
+        let val,max;
+        if(atype==='hp'){val=(ch.HP?.cur||0)+d;max=ch.HP?.max||0;}
+        else if(atype==='san'){val=(ch.SAN?.cur||0)+d;max=ch.SAN?.max||0;}
+        else if(atype==='mp'){val=(ch.MP?.cur||0)+d;max=ch.MP?.max||0;}
+        val=Math.max(0,Math.min(max,val));
+        // Update local cache immediately then re-render
+        if(atype==='hp')this.members[pn].char.HP.cur=val;
+        else if(atype==='san')this.members[pn].char.SAN.cur=val;
+        else if(atype==='mp')this.members[pn].char.MP.cur=val;
+        this._renderMembers();
+        // Debounce Firebase write
+        const key=pn+'_'+atype;
+        clearTimeout(this._kpAdjDebounce[key]);
+        this._kpAdjDebounce[key]=setTimeout(()=>{
+          if(!this.roomId)return;
+          const upd={};
+          if(atype==='hp')upd['char/HP/cur']=val;
+          else if(atype==='san')upd['char/SAN/cur']=val;
+          else if(atype==='mp')upd['char/MP/cur']=val;
+          this.db.ref(`rooms/${this.roomId}/players/${pn}`).update(upd).catch(()=>{});
+        },300);
+      });
+    });
   },
 
   _renderFooter(){
@@ -4213,6 +4352,31 @@ const FB={
     const dot=document.getElementById('fbSbDot');
     if(!dot)return;
     dot.className='fb-sb-dot'+(state?' '+state:'');
+  },
+
+  _startHeartbeat(){
+    this._stopHeartbeat();
+    this._heartbeatTimer=setInterval(()=>{
+      if(this._playerRef&&this.roomId)
+        this._playerRef.update({online:true,lastSeen:Date.now()}).catch(()=>{});
+    },20000);
+  },
+  _stopHeartbeat(){clearInterval(this._heartbeatTimer);this._heartbeatTimer=null;},
+
+  _saveRoomState(){
+    if(!this.roomId)return;
+    try{localStorage.setItem('fb_last_room',JSON.stringify({roomId:this.roomId,playerName:this.playerName}));}catch(e){}
+  },
+  _clearRoomState(){try{localStorage.removeItem('fb_last_room');}catch(e){}},
+
+  async rejoinRoom(){
+    if(this.roomId)return;
+    try{
+      const raw=localStorage.getItem('fb_last_room');
+      if(!raw)return;
+      const{roomId,playerName}=JSON.parse(raw);
+      if(roomId&&playerName)await this.joinRoom(roomId,playerName);
+    }catch(e){}
   },
 
   _updateChIndicator(chName){
@@ -4338,7 +4502,25 @@ S.pushHist=function(e){
 const _fbPrevAdjBar=App.adjustBar.bind(App);
 App.adjustBar=function(...args){_fbPrevAdjBar(...args);FB.syncPlayer();};
 
-document.addEventListener('DOMContentLoaded',()=>{spawnStars();FB.init();FB.bindUI();App.init();});
+document.addEventListener('DOMContentLoaded',()=>{
+  spawnStars();FB.init();FB.bindUI();App.init();
+  // Fix 3: auto-rejoin saved room on page load
+  setTimeout(()=>{if(!FB.roomId)FB.rejoinRoom();},600);
+});
+
+// Fix 3: Page Visibility API — pause heartbeat when hidden, reconnect when visible
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){
+    FB._stopHeartbeat();
+  }else{
+    FB._startHeartbeat();
+    if(FB.roomId&&FB._playerRef){
+      FB._playerRef.update({online:true,lastSeen:Date.now()}).catch(()=>{});
+    }else if(!FB.roomId){
+      FB.rejoinRoom();
+    }
+  }
+});
 </script>
 </body>
 </html>
