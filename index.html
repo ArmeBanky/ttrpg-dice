@@ -1104,6 +1104,7 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 .fb-toast{background:rgba(12,12,22,.96);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 16px;color:var(--text);font-size:13px;backdrop-filter:blur(14px);transform:translateX(110%);animation:toastIn .28s ease forwards;font-family:var(--font-body);max-width:270px;border-left-width:3px}
 .fb-toast.success{border-left-color:#22c55e}
 .fb-toast.error{border-left-color:#ef4444}
+.fb-toast.info{border-left-color:#6b7280}
 .fb-toast.out{animation:toastOut .25s ease forwards}
 @keyframes toastIn{to{transform:translateX(0)}}
 @keyframes toastOut{to{transform:translateX(110%);opacity:0}}
@@ -3979,7 +3980,7 @@ const FB={
   _listeners:[], _rollRef:null, _rollListener:null,
   _playerRef:null, _hostRef:null, _membersCollapsed:false,
   _subChCollapsed:false, _kpAdjDebounce:{},
-  _heartbeatTimer:null,
+  _heartbeatTimer:null, _fbHbTimer:null, _hbRef:null,
 
   init(){
     try{
@@ -3997,26 +3998,113 @@ const FB={
       if(!this.roomId){this._toast('房间ID只能含字母、数字、-、_','error');return;}
       this.playerName=(playerName.trim()||'玩家').slice(0,16);
       this._setDot('connecting');
-      // Check if player was previously kicked from this room
+
+      // Pre-join cleanup: clear stale heartbeats + ghost players, then remove own old data
+      try{
+        const _now=Date.now();
+        const _hbSnap=await this.db.ref(`rooms/${this.roomId}/heartbeats`).once('value');
+        const _aliveSet=new Set();
+        if(_hbSnap.exists()){
+          _hbSnap.forEach(snap=>{
+            const d=snap.val();
+            if(d&&d.lastSeen&&(_now-d.lastSeen)<60000){
+              _aliveSet.add(snap.key);
+            }else{
+              snap.ref.remove();
+            }
+          });
+        }
+        const _chSnap=await this.db.ref(`rooms/${this.roomId}/channels`).once('value');
+        if(_chSnap.exists()){
+          _chSnap.forEach(ch=>{
+            const players=ch.child('players');
+            if(players.exists()){
+              players.forEach(p=>{
+                if(!_aliveSet.has(p.key))p.ref.remove();
+              });
+            }
+          });
+        }
+        await this.db.ref(`rooms/${this.roomId}/heartbeats/${this.playerName}`).remove();
+        const _chSnap2=await this.db.ref(`rooms/${this.roomId}/channels`).once('value');
+        if(_chSnap2.exists()){
+          _chSnap2.forEach(ch=>{
+            this.db.ref(`rooms/${this.roomId}/channels/${ch.key}/players/${this.playerName}`).remove();
+          });
+        }
+      }catch(e){console.warn('pre-join cleanup:',e);}
+
+      // Kick check
       const kickCheckSnap=await this.db.ref(`rooms/${this.roomId}/kicks/${this.playerName}`).once('value');
       if(kickCheckSnap.exists()){this._toast('你已被 KP 移出该房间，无法重新加入','error');this.roomId=null;this._setDot('');return;}
-      // First to join becomes KP/host
+
+      // Step 1: Clean own stale data before writing anything
+      try{
+        const prevChSnap=await this.db.ref(`rooms/${this.roomId}/channels`).once('value');
+        if(prevChSnap.exists()){
+          const removes=[];
+          prevChSnap.forEach(ch=>{
+            removes.push(this.db.ref(`rooms/${this.roomId}/channels/${ch.key}/players/${this.playerName}`).remove());
+          });
+          await Promise.all(removes);
+        }
+        await this.db.ref(`rooms/${this.roomId}/heartbeats/${this.playerName}`).remove();
+        await this.db.ref(`rooms/${this.roomId}/playerStatus/${this.playerName}`).remove();
+      }catch(e){console.warn('自我清理失败:',e);}
+
+      // Step 2: KP determination via atomic transaction
       this._hostRef=this.db.ref(`rooms/${this.roomId}/host`);
-      const hostSnap=await this._hostRef.once('value');
-      if(!hostSnap.exists()){
-        this.isKP=true;
-        await this._hostRef.set(this.playerName);
-        this._hostRef.onDisconnect().remove();
-      }else{
-        this.isKP=false;
-      }
-      // Register player presence (include characterName for member list)
+      const txResult=await this._hostRef.transaction(currentHost=>{
+        if(currentHost===null)return{playerId:this.playerName,setAt:Date.now()};
+        return currentHost;
+      });
+      this.isKP=(txResult.snapshot.val()?.playerId===this.playerName);
+      if(this.isKP)this._hostRef.onDisconnect().remove();
+
+      // Step 3: Ghost cleanup — filter heartbeats by freshness, then clean channel players
+      try{
+        const hbSnap=await this.db.ref(`rooms/${this.roomId}/heartbeats`).once('value');
+        const activeIds=new Set([this.playerName]); // self is always alive
+        const staleHbRemoves=[];
+        if(hbSnap.exists()){
+          const now=Date.now();
+          hbSnap.forEach(snap=>{
+            const data=snap.val();
+            if(data&&(now-(data.lastSeen||0))<90000){
+              activeIds.add(snap.key);
+            }else{
+              // Stale heartbeat → mark for removal
+              staleHbRemoves.push(this.db.ref(`rooms/${this.roomId}/heartbeats/${snap.key}`).remove());
+            }
+          });
+        }
+        if(staleHbRemoves.length)await Promise.all(staleHbRemoves).catch(()=>{});
+        const ghostChSnap=await this.db.ref(`rooms/${this.roomId}/channels`).once('value');
+        if(ghostChSnap.exists()){
+          const removes=[];
+          ghostChSnap.forEach(ch=>{
+            if(ch.child('players').exists()){
+              ch.child('players').forEach(player=>{
+                if(!activeIds.has(player.key))
+                  removes.push(this.db.ref(`rooms/${this.roomId}/channels/${ch.key}/players/${player.key}`).remove());
+              });
+            }
+          });
+          if(removes.length)await Promise.all(removes);
+        }
+      }catch(e){console.warn('幽灵清理失败:',e);}
+
+      // Step 4: Write own presence + heartbeat + onDisconnect
       this._playerRef=this.db.ref(`rooms/${this.roomId}/players/${this.playerName}`);
       const charSnap=this._charSnapshot();
       await this._playerRef.set({online:true,ts:Date.now(),lastSeen:Date.now(),isKP:this.isKP,char:charSnap,
         characterName:charSnap&&charSnap.name?charSnap.name:'',currentChannel:'general'});
       this._playerRef.onDisconnect().update({online:false,lastSeen:Date.now()});
-      // Ensure default channels exist (channelList metadata + channels data node)
+      this._hbRef=this.db.ref(`rooms/${this.roomId}/heartbeats/${this.playerName}`);
+      this._hbRef.onDisconnect().remove();
+      await this._hbRef.set({lastSeen:Date.now(),characterName:charSnap?.name||this.playerName});
+
+      // Ensure default channels exist
       const clRef=this.db.ref(`rooms/${this.roomId}/channelList`);
       const clSnap=await clRef.once('value');
       if(!clSnap.exists()){
@@ -4026,12 +4114,12 @@ const FB={
         }
         await clRef.set(defaults);
       }
-      // Backward compat: ensure rolls nodes exist for default channels
       for(const c of DEFAULT_CHANNELS){
         const chRef=this.db.ref(`rooms/${this.roomId}/channels/${c.id}`);
         if(!(await chRef.once('value')).exists())
           await chRef.set({created:Date.now(),name:c.id});
       }
+
       this._listenChannels();
       this._listenMembers();
       await this.setActiveCh('general');
@@ -4050,18 +4138,23 @@ const FB={
       else document.body.classList.remove('fb-nonkp-room');
       this._saveRoomState();
       this._startHeartbeat();
+      this._startFbHeartbeat();
+
       if(this.isKP){
         KP._judgeCharType='self';KP._judgeCharId=null;KP._judgeChar=null;
         KP.startListening();
         App.renderDiceTab?.();
+        // Listen for heartbeat removals → sync card wall in real-time
+        const hbListenRef=this.db.ref(`rooms/${this.roomId}/heartbeats`);
+        const hbRemovedFn=hbListenRef.on('child_removed',snap=>{KP._removePlayerFromConsole(snap.key);});
+        this._listeners.push({ref:hbListenRef,type:'child_removed',fn:hbRemovedFn});
+        KP._startGhostCheck();
       }else{
         await _checkJoinNameConflict();
         _syncPlayerCard();
-        // Non-KP: listen for kick from KP
         const kickRef=this.db.ref(`rooms/${this.roomId}/kicks/${this.playerName}`);
         const kickFn=kickRef.on('value',snap=>{if(snap.exists())_showKickedOverlay();});
         this._listeners.push({ref:kickRef,type:'value',fn:kickFn});
-        // Non-KP: listen to playerStatus conditions assigned by KP
         const statusRef=this.db.ref(`rooms/${this.roomId}/playerStatus/${this.playerName}/conditions`);
         const statusFn=statusRef.on('value',snap=>{
           const conds=snap.val();
@@ -4081,8 +4174,29 @@ const FB={
     clearTimeout(_bgTimer);_bgTimer=null;
     document.body.classList.remove('fb-nonkp-room');
     this._stopHeartbeat();
+    this._stopFbHeartbeat();
+    KP._stopGhostCheck();
+    // Capture before any state reset, then async-remove all own Firebase nodes
+    const _db=this.db,_room=this.roomId,_pid=this.playerName,_isKP=this.isKP;
+    if(_db&&_room&&_pid){
+      (async()=>{
+        try{
+          const paths=[
+            `rooms/${_room}/heartbeats/${_pid}`,
+            `rooms/${_room}/playerStatus/${_pid}`,
+          ];
+          const chSnap=await _db.ref(`rooms/${_room}/channels`).once('value');
+          if(chSnap.exists())chSnap.forEach(ch=>{
+            paths.push(`rooms/${_room}/channels/${ch.key}/players/${_pid}`);
+          });
+          if(_isKP)paths.push(`rooms/${_room}/host`);
+          await Promise.all(paths.map(p=>_db.ref(p).remove()));
+        }catch(e){console.warn('leaveRoom cleanup:',e);}
+      })();
+    }
+    this._hbRef=null;
     this._clearRoomState();
-    if(this.isKP&&this._hostRef){try{this._hostRef.remove();}catch(e){}this._hostRef=null;}
+    this._hostRef=null;
     if(this._playerRef){try{this._playerRef.remove();}catch(e){}this._playerRef=null;}
     for(const{ref,type,fn}of this._listeners){try{ref.off(type,fn);}catch(e){}}
     this._listeners=[];
@@ -4549,7 +4663,7 @@ const FB={
       const kickBtn=this.isKP&&!isThisKP
         ?`<button class="fb-mbr-kick-btn" data-action="kick-player" data-player-id="${esc(playerName)}" data-char-name="${esc(displayName)}" title="踢出玩家">⊘</button>`
         :'';
-      return`<div class="fb-mbr-item" style="flex-wrap:wrap">
+      return`<div class="fb-mbr-item" data-member-id="${esc(playerName)}" style="flex-wrap:wrap">
         <div class="fb-mbr-avatar-wrap"><div class="fb-mbr-avatar" style="background:${avatarBg}">${avatarContent}</div><span class="fb-mbr-dot" style="background:${dotColor}"></span></div>
         <div class="fb-mbr-info">
           <div class="fb-mbr-charname">${esc(displayName)}</div>
@@ -4626,6 +4740,15 @@ const FB={
     },20000);
   },
   _stopHeartbeat(){clearInterval(this._heartbeatTimer);this._heartbeatTimer=null;},
+
+  _startFbHeartbeat(){
+    this._stopFbHeartbeat();
+    this._fbHbTimer=setInterval(()=>{
+      if(this._hbRef&&this.roomId)
+        this._hbRef.update({lastSeen:Date.now()}).catch(()=>{});
+    },30000);
+  },
+  _stopFbHeartbeat(){clearInterval(this._fbHbTimer);this._fbHbTimer=null;},
 
   _saveRoomState(){
     if(!this.roomId)return;
@@ -4729,7 +4852,7 @@ const KP={
   _cardListenerFn:null,
   // Sync debounces
   _syncDebounce:null,
-  _condSyncDebounce:{},
+  _condSyncDebounce:{}, _ghostTimer:null,
 
   getNpcs(){return S._g('kp_npcs_'+(FB.roomId||'_local'))||[];},
   saveNpcs(npcs){S._s('kp_npcs_'+(FB.roomId||'_local'),npcs);},
@@ -4751,6 +4874,72 @@ const KP={
     }
     this._cardListenerFn=null;this._playerCards={};
   },
+
+  _removePlayerFromConsole(playerId){
+    // Fade and remove card from wall
+    const wall=document.getElementById('kpCardWall');
+    if(wall){
+      const card=wall.querySelector(`[data-player-id="${CSS.escape(playerId)}"]`);
+      if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>card.remove(),400);}
+    }
+    // Remove member list item
+    const mbrItem=document.querySelector(`.fb-mbr-item[data-member-id="${CSS.escape(playerId)}"]`);
+    if(mbrItem)mbrItem.remove();
+    // Clear detail pane if showing this player
+    if(this._judgeCharType==='player'&&this._judgeCharId==='player_'+playerId){
+      this._judgeCharType='self';this._judgeCharId=null;this._judgeChar=null;
+      this._updateJudgeIndicator?.();
+    }
+    const detailPane=document.getElementById('kpDetailPane');
+    if(detailPane){
+      const showing=detailPane.dataset.playerId;
+      if(showing===playerId){detailPane.innerHTML='<div style="color:var(--dim);font-size:13px;padding:20px;text-align:center">玩家已离开房间</div>';delete detailPane.dataset.playerId;}
+    }
+    // Remove from internal card cache
+    delete this._playerCards[playerId];
+  },
+
+  _startGhostCheck(){
+    this._stopGhostCheck();
+    const _doGhostCheck=async()=>{
+      if(!FB.db||!FB.roomId||!FB.isKP)return;
+      try{
+        const now=Date.now();
+        const THRESHOLD=90000;
+        const hbSnap=await FB.db.ref(`rooms/${FB.roomId}/heartbeats`).once('value');
+        const activeIds=new Set();
+        const removes=[];
+        if(hbSnap.exists()){
+          hbSnap.forEach(snap=>{
+            const data=snap.val();
+            if(now-(data.lastSeen||0)<THRESHOLD){
+              activeIds.add(snap.key);
+            }else{
+              removes.push(FB.db.ref(`rooms/${FB.roomId}/heartbeats/${snap.key}`).remove());
+              removes.push(FB.db.ref(`rooms/${FB.roomId}/players/${snap.key}`).remove());
+            }
+          });
+        }
+        // Always include self as active
+        activeIds.add(FB.playerName);
+        const chSnap=await FB.db.ref(`rooms/${FB.roomId}/channels`).once('value');
+        if(chSnap.exists()){
+          chSnap.forEach(ch=>{
+            if(ch.child('players').exists()){
+              ch.child('players').forEach(player=>{
+                if(!activeIds.has(player.key))
+                  removes.push(FB.db.ref(`rooms/${FB.roomId}/channels/${ch.key}/players/${player.key}`).remove());
+              });
+            }
+          });
+        }
+        if(removes.length)await Promise.all(removes).catch(e=>console.warn('ghost remove:',e));
+      }catch(e){console.warn('ghostCheck:',e);}
+    };
+    _doGhostCheck();
+    this._ghostTimer=setInterval(_doGhostCheck,60000);
+  },
+  _stopGhostCheck(){clearInterval(this._ghostTimer);this._ghostTimer=null;},
 
   // Convert Firebase playerCard + live members data to standard char object
   _cardToChar(playerId){
@@ -5867,12 +6056,15 @@ function autoLeaveRoom(){
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'){
     FB._stopHeartbeat();
+    FB._stopFbHeartbeat();
     if(FB.roomId)_bgTimer=setTimeout(autoLeaveRoom,20*60*1000);
   }else{
     clearTimeout(_bgTimer);_bgTimer=null;
     FB._startHeartbeat();
+    FB._startFbHeartbeat();
     if(FB.roomId&&FB._playerRef){
       FB._playerRef.update({online:true,lastSeen:Date.now()}).catch(()=>{});
+      if(FB._hbRef)FB._hbRef.update({lastSeen:Date.now()}).catch(()=>{});
     }else if(!FB.roomId){
       FB.rejoinRoom();
     }
