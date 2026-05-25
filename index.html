@@ -4103,6 +4103,8 @@ const FB={
       this._hbRef=this.db.ref(`rooms/${this.roomId}/heartbeats/${this.playerName}`);
       this._hbRef.onDisconnect().remove();
       await this._hbRef.set({lastSeen:Date.now(),characterName:charSnap?.name||this.playerName});
+      // playerCards onDisconnect: clean up when player disconnects
+      this.db.ref(`rooms/${this.roomId}/playerCards/${this.playerName}`).onDisconnect().remove();
 
       // Ensure default channels exist
       const clRef=this.db.ref(`rooms/${this.roomId}/channelList`);
@@ -4184,6 +4186,7 @@ const FB={
           const paths=[
             `rooms/${_room}/heartbeats/${_pid}`,
             `rooms/${_room}/playerStatus/${_pid}`,
+            `rooms/${_room}/playerCards/${_pid}`,
           ];
           const chSnap=await _db.ref(`rooms/${_room}/channels`).once('value');
           if(chSnap.exists())chSnap.forEach(ch=>{
@@ -4876,27 +4879,30 @@ const KP={
   },
 
   _removePlayerFromConsole(playerId){
-    // Fade and remove card from wall
-    const wall=document.getElementById('kpCardWall');
-    if(wall){
-      const card=wall.querySelector(`[data-player-id="${CSS.escape(playerId)}"]`);
+    // Fade card in wall (actual card uses data-card-id="player:{pid}")
+    const scroll=document.getElementById('kpWallScroll');
+    if(scroll){
+      const card=scroll.querySelector(`[data-card-id="player:${CSS.escape(playerId)}"]`);
       if(card){card.style.transition='opacity .4s';card.style.opacity='0';setTimeout(()=>card.remove(),400);}
     }
     // Remove member list item
     const mbrItem=document.querySelector(`.fb-mbr-item[data-member-id="${CSS.escape(playerId)}"]`);
     if(mbrItem)mbrItem.remove();
-    // Clear detail pane if showing this player
-    if(this._judgeCharType==='player'&&this._judgeCharId==='player_'+playerId){
+    // Clear judge state if this player was the active judge
+    if(this._judgeCharType==='player'&&this._judgeCharId===playerId){
       this._judgeCharType='self';this._judgeCharId=null;this._judgeChar=null;
       this._updateJudgeIndicator?.();
+      App.refreshSkillCheck?.();App.refreshCombatArena?.();
     }
-    const detailPane=document.getElementById('kpDetailPane');
-    if(detailPane){
-      const showing=detailPane.dataset.playerId;
-      if(showing===playerId){detailPane.innerHTML='<div style="color:var(--dim);font-size:13px;padding:20px;text-align:center">玩家已离开房间</div>';delete detailPane.dataset.playerId;}
+    // Clear detail pane if showing this player
+    if(this._detailType==='player'&&this._detailId===playerId){
+      this._detailType=null;this._detailId=null;
+      const upper=document.getElementById('kpBuilderUpper');
+      if(upper)upper.innerHTML='<div class="kp-mid-empty">玩家已离开房间</div>';
     }
-    // Remove from internal card cache
-    delete this._playerCards[playerId];
+    // Do NOT delete from _playerCards here — the Firebase playerCards listener
+    // owns that state. Deleting here causes renderConsole to lose the card
+    // before Firebase cleans up the node.
   },
 
   _startGhostCheck(){
@@ -4917,6 +4923,7 @@ const KP={
             }else{
               removes.push(FB.db.ref(`rooms/${FB.roomId}/heartbeats/${snap.key}`).remove());
               removes.push(FB.db.ref(`rooms/${FB.roomId}/players/${snap.key}`).remove());
+              removes.push(FB.db.ref(`rooms/${FB.roomId}/playerCards/${snap.key}`).remove());
             }
           });
         }
@@ -4945,19 +4952,26 @@ const KP={
   _cardToChar(playerId){
     const card=this._playerCards[playerId]||{};
     const mc=FB.members[playerId]?.char||{};
+    // Backward compat: old format used nested attributes/derivedStats
     const a=card.attributes||{};const d=card.derivedStats||{};
+    // Attributes: new flat > old nested
+    const STR=card.STR??a.STR??0;const DEX=card.DEX??a.DEX??0;
+    const CON=card.CON??a.CON??0;const SIZ=card.SIZ??a.SIZ??0;
+    const APP=card.APP??a.APP??0;const INT=card.INT??a.INT??0;
+    const POW=card.POW??a.POW??0;const EDU=card.EDU??a.EDU??0;const LCK=card.LCK??a.LCK??0;
+    // HP/SAN/MP: new flat object > players-node object > old numbers
+    const HP=card.HP||mc.HP||{cur:d.HP||0,max:d.maxHP||0};
+    const SAN=card.SAN||mc.SAN||{cur:d.SAN||0,max:d.maxSAN||0};
+    const MP=card.MP||mc.MP||{cur:d.MP||0,max:d.maxMP||0};
+    // Skills: new format uses prof; old format used occupation
+    const skills=(card.skills||[]).map(sk=>({id:sk.id||sk.name,name:sk.name,base:sk.base||0,prof:sk.prof??sk.occupation??0,interest:sk.interest||0}));
     return{id:'player_'+playerId,name:card.characterName||playerId,mode:'COC',
       _isNpc:false,_playerId:playerId,avatar:mc.avatar||card.avatar||'',
       occupation:card.occupation||'',background:card.background||'',inventory:card.inventory||[],
-      coc:{STR:a.STR||0,DEX:a.DEX||0,CON:a.CON||0,SIZ:a.SIZ||0,
-        APP:a.APP||0,INT:a.INT||0,POW:a.POW||0,EDU:a.EDU||0,LCK:a.LCK||0,
-        HP:mc.HP||{cur:d.HP||0,max:d.maxHP||0},
-        SAN:mc.SAN||{cur:d.SAN||0,max:d.maxSAN||0},
-        MP:mc.MP||{cur:d.MP||0,max:d.maxMP||0},
-        madness:mc.madness||card.madness||{},
-        conditions:mc.conditions||card.conditions||{},
-        skills:(card.skills||[]).map(sk=>({id:sk.name,name:sk.name,base:sk.base||0,prof:sk.occupation||0,interest:sk.interest||0})),
-        cthulhuMythos:0,weapons:card.weapons||[],
+      coc:{STR,DEX,CON,SIZ,APP,INT,POW,EDU,LCK,HP,SAN,MP,
+        madness:card.madness||mc.madness||{},
+        conditions:card.conditions||mc.conditions||{},
+        skills,cthulhuMythos:0,weapons:card.weapons||[],
       }
     };
   },
@@ -5720,7 +5734,11 @@ const KP={
     document.getElementById('kpKickModal')?.remove();
     try{
       await FB.db.ref(`rooms/${FB.roomId}/kicks/${playerName}`).set({kickedAt:Date.now(),kickedBy:FB.playerName,reason:'kicked'});
-      await FB.db.ref(`rooms/${FB.roomId}/playerStatus/${playerName}`).remove().catch(()=>{});
+      await Promise.all([
+        FB.db.ref(`rooms/${FB.roomId}/playerStatus/${playerName}`).remove(),
+        FB.db.ref(`rooms/${FB.roomId}/heartbeats/${playerName}`).remove(),
+        FB.db.ref(`rooms/${FB.roomId}/playerCards/${playerName}`).remove(),
+      ]).catch(()=>{});
       const chSnap=await FB.db.ref(`rooms/${FB.roomId}/channels`).once('value');
       const chData=chSnap.val()||{};
       for(const ch of Object.keys(chData)){
@@ -5978,26 +5996,19 @@ async function _checkJoinNameConflict(){
 // ── Player card auto-sync to Firebase playerCards node ──────────────────────
 function _buildPlayerCard(char){
   if(!char||char.mode!=='COC')return null;
-  const c=char.coc;const d=cocDerived(c);const ex=cocExtras(c);
-  const pid=FB.playerName||'';
+  const c=char.coc;const d=cocDerived(c);
+  // Write flat structure matching local field names exactly — no renaming
   return{
-    characterName:char.name||'',playerId:pid,
+    characterName:char.name||'',playerId:FB.playerName||'',
     occupation:char.occupation||'',gender:char.gender||'',age:char.age||'',
-    avatar:char._avatarCompressed||'',
-    attributes:{STR:c.STR||0,DEX:c.DEX||0,CON:c.CON||0,SIZ:c.SIZ||0,
-      APP:c.APP||0,INT:c.INT||0,POW:c.POW||0,EDU:c.EDU||0,LCK:c.LCK||0},
-    derivedStats:{HP:c.HP?.cur??0,maxHP:c.HP?.max??d.hpMax,
-      SAN:c.SAN?.cur??0,maxSAN:c.SAN?.max??d.sanMax,
-      MP:c.MP?.cur??0,maxMP:c.MP?.max??d.mpMax,
-      DB:ex.db,build:ex.build,MOV:ex.mov||8},
-    skills:(c.skills||[]).map(sk=>({name:sk.name,base:sk.base||0,
-      occupation:sk.prof||0,interest:sk.interest||0,
-      total:(sk.base||0)+(sk.prof||0)+(sk.interest||0)})),
-    inventory:char.inventory||[],
-    background:char.background||'',
-    weapons:c.weapons||[],
-    madness:c.madness||{},
-    conditions:c.conditions||{},
+    avatar:char._avatarCompressed||'',background:char.background||'',inventory:char.inventory||[],
+    STR:c.STR||0,DEX:c.DEX||0,CON:c.CON||0,SIZ:c.SIZ||0,
+    APP:c.APP||0,INT:c.INT||0,POW:c.POW||0,EDU:c.EDU||0,LCK:c.LCK||0,
+    HP:{cur:c.HP?.cur??0,max:c.HP?.max??d.hpMax},
+    SAN:{cur:c.SAN?.cur??0,max:c.SAN?.max??d.sanMax},
+    MP:{cur:c.MP?.cur??0,max:c.MP?.max??d.mpMax},
+    skills:(c.skills||[]).map(sk=>({id:sk.id||sk.name,name:sk.name,base:sk.base||0,prof:sk.prof||0,interest:sk.interest||0})),
+    weapons:c.weapons||[],madness:c.madness||{},conditions:c.conditions||{},
     lastUpdate:Date.now()
   };
 }
