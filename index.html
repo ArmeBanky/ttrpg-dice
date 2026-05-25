@@ -4111,6 +4111,8 @@ const FB={
     KP._playerCards={};
     if(KP._judgeCharType!=='self'){KP._judgeCharType='self';KP._judgeCharId=null;KP._judgeChar=null;KP._updateJudgeIndicator?.();}
     this._updateChIndicator('');
+    // Immediately reset dice tab to non-KP layout (isKP/roomId already false/null)
+    App.renderDiceTab?.();
   },
 
   async setActiveCh(chName){
@@ -4545,7 +4547,7 @@ const FB={
         if(activeConds.length)condTagsHtml=`<div class="fb-mbr-conds">${activeConds.map(k=>`<span class="fb-mbr-cond ${k}">${condLbls[k]}</span>`).join('')}</div>`;
       }
       const kickBtn=this.isKP&&!isThisKP
-        ?`<button class="fb-mbr-kick-btn" data-kick-player="${esc(playerName)}" data-kick-char="${esc(displayName)}" title="踢出玩家">⊘</button>`
+        ?`<button class="fb-mbr-kick-btn" data-action="kick-player" data-player-id="${esc(playerName)}" data-char-name="${esc(displayName)}" title="踢出玩家">⊘</button>`
         :'';
       return`<div class="fb-mbr-item" style="flex-wrap:wrap">
         <div class="fb-mbr-avatar-wrap"><div class="fb-mbr-avatar" style="background:${avatarBg}">${avatarContent}</div><span class="fb-mbr-dot" style="background:${dotColor}"></span></div>
@@ -4560,14 +4562,6 @@ const FB={
         ${condTagsHtml}
       </div>`;
     }).join('');
-    if(this.isKP){
-      el.querySelectorAll('[data-kick-player]').forEach(btn=>{
-        btn.addEventListener('click',e=>{
-          e.stopPropagation();
-          this._kickPlayer(btn.dataset.kickPlayer,btn.dataset.kickChar);
-        });
-      });
-    }
   },
 
   _renderFooter(){
@@ -4865,7 +4859,6 @@ const KP={
         <button class="btn" id="kpCollapseAll" style="padding:2px 8px;font-size:11px">全收起</button>
         <div style="flex:1"></div>
         <button class="btn" id="kpImportNpc" style="padding:2px 8px;font-size:11px;border-color:rgba(249,115,22,.5);color:#fb923c">＋ 导入NPC</button>
-        <button class="btn" id="kpKickedList" style="padding:2px 8px;font-size:11px;border-color:rgba(239,68,68,.45);color:#f87171">⊘ 踢出名单</button>
       </div>
       <div class="kp-wall-scroll" id="kpWallScroll">${cards||'<div class="empty" style="padding:20px;text-align:center;color:var(--dim)">暂无角色数据</div>'}</div>
     </div>`;
@@ -4915,7 +4908,6 @@ const KP={
     document.getElementById('kpExpandAll')?.addEventListener('click',()=>{this._collapsedCards.clear();this.renderConsole();});
     document.getElementById('kpCollapseAll')?.addEventListener('click',()=>{this._buildCardEntries().forEach(({type,id})=>this._collapsedCards.add(type+':'+id));this.renderConsole();});
     document.getElementById('kpImportNpc')?.addEventListener('click',()=>this._showNpcModal());
-    document.getElementById('kpKickedList')?.addEventListener('click',()=>this._showKickedListModal());
     // Card toggle
     scroll.querySelectorAll('[data-card-toggle]').forEach(hdr=>{
       hdr.addEventListener('click',e=>{
@@ -4950,8 +4942,8 @@ const KP={
         const cid=btn.dataset.cardJudge;
         const[type,...rest]=cid.split(':');const id=rest.join(':');
         const isAlreadyJudging=this._judgeCharType===type&&(type==='self'||this._judgeCharId===id);
-        this.setJudgeChar(isAlreadyJudging?'self':'',isAlreadyJudging?null:id);
-        if(!isAlreadyJudging){this.setJudgeChar(type,type==='self'?null:id);if(type!=='self')this.showDetail(type,id);}
+        if(!isAlreadyJudging){this.setJudgeChar(type,type==='self'?null:id);this.showDetail(type,id);}
+        else{this.setJudgeChar('self',null);}
       });
     });
     // Detail button → load into builder panel lower half
@@ -5163,7 +5155,7 @@ const KP={
     }
     const char=this._getCardChar(type,id);
     if(!char){upper.innerHTML='<div class="kp-mid-empty">角色数据不存在</div>';return;}
-    const isPlayer=type==='player';
+    const isPlayer=type==='player'||type==='self';
     const c=char.coc||{};const dv=cocDerived(c);const ex=cocExtras(c);
     const fl=n=>Math.floor(n);
     // Portrait
@@ -5534,27 +5526,27 @@ const KP={
     },80);
   },
 
-  _kickPlayer(playerName,charName){
-    this._showKickConfirmModal(playerName,charName,async()=>{
-      if(!this.db||!this.roomId)return;
-      try{
-        await this.db.ref(`rooms/${this.roomId}/kicks/${playerName}`).set({kickedAt:Date.now(),kickedBy:this.playerName,reason:'kicked'});
-        await this.db.ref(`rooms/${this.roomId}/playerStatus/${playerName}`).remove().catch(()=>{});
-        const chSnap=await this.db.ref(`rooms/${this.roomId}/channels`).once('value');
-        const chData=chSnap.val()||{};
-        for(const ch of Object.keys(chData)){
-          await this.db.ref(`rooms/${this.roomId}/channels/${ch}/players/${playerName}`).remove().catch(()=>{});
-        }
-        await this.db.ref(`rooms/${this.roomId}/players/${playerName}`).remove().catch(()=>{});
-        FB._toast(`已踢出「${charName}」`,'success');
-        this.renderConsole();
-      }catch(e){console.error('kickPlayer:',e);FB._toast('踢出失败: '+e.message,'error');}
-    });
+  async _kickPlayer(playerName){
+    if(!FB.db||!FB.roomId||!FB.isKP)return;
+    document.getElementById('kpKickModal')?.remove();
+    try{
+      await FB.db.ref(`rooms/${FB.roomId}/kicks/${playerName}`).set({kickedAt:Date.now(),kickedBy:FB.playerName,reason:'kicked'});
+      await FB.db.ref(`rooms/${FB.roomId}/playerStatus/${playerName}`).remove().catch(()=>{});
+      const chSnap=await FB.db.ref(`rooms/${FB.roomId}/channels`).once('value');
+      const chData=chSnap.val()||{};
+      for(const ch of Object.keys(chData)){
+        await FB.db.ref(`rooms/${FB.roomId}/channels/${ch}/players/${playerName}`).remove().catch(()=>{});
+      }
+      FB._toast(`已将「${playerName}」移出房间`,'success');
+      this.renderConsole();
+    }catch(e){console.error('kickPlayer:',e);FB._toast('踢出失败: '+e.message,'error');}
   },
 
-  _showKickConfirmModal(playerName,charName,onConfirm){
-    const modal=document.createElement('div');modal.className='kp-modal-overlay';
+  _showKickConfirmModal(playerName,charName){
+    document.getElementById('kpKickModal')?.remove();
+    const modal=document.createElement('div');modal.className='kp-modal-overlay';modal.id='kpKickModal';
     modal.innerHTML=`<div class="kp-modal" style="max-width:380px">
+      <input type="hidden" id="kickTargetId" value="${esc(playerName)}">
       <div class="kp-modal-title">⊘ 踢出玩家</div>
       <div style="font-size:13px;color:var(--text-muted);line-height:1.8;margin-bottom:16px">
         确认将「${esc(charName)}」(@${esc(playerName)})<br>踢出当前房间？<br>
@@ -5562,48 +5554,12 @@ const KP={
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn" id="kpKickCancel" style="flex:1">取消</button>
-        <button class="btn danger" id="kpKickConfirm" style="flex:1;background:#dc2626;border-color:#dc2626;color:#fff">确认踢出</button>
+        <button class="btn danger" data-action="confirm-kick" style="flex:1;background:#dc2626;border-color:#dc2626;color:#fff">确认踢出</button>
       </div>
     </div>`;
     document.body.appendChild(modal);
     document.getElementById('kpKickCancel')?.addEventListener('click',()=>modal.remove());
     modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
-    document.getElementById('kpKickConfirm')?.addEventListener('click',()=>{modal.remove();onConfirm();});
-  },
-
-  _showKickedListModal(){
-    if(!this.db||!this.roomId)return;
-    this.db.ref(`rooms/${this.roomId}/kicks`).once('value').then(snap=>{
-      const kicks=snap.val()||{};
-      const modal=document.createElement('div');modal.className='kp-modal-overlay';
-      const rows=Object.entries(kicks).map(([pid,data])=>{
-        const t=data.kickedAt?new Date(data.kickedAt).toLocaleTimeString():'';
-        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-          <span style="flex:1;font-size:12px;color:var(--text)">${esc(pid)}</span>
-          <span style="font-size:11px;color:var(--dim)">${t}</span>
-          <button class="btn" data-unkick="${esc(pid)}" style="font-size:11px;padding:2px 10px;border-color:rgba(39,174,96,.5);color:#27ae60">解除</button>
-        </div>`;
-      }).join('');
-      modal.innerHTML=`<div class="kp-modal" style="max-width:420px">
-        <div class="kp-modal-title">⊘ 已踢出名单</div>
-        <div style="max-height:260px;overflow-y:auto">${rows||'<div style="font-size:12px;color:var(--dim);padding:12px 0">暂无已踢出玩家</div>'}</div>
-        <div class="kp-modal-sep"></div>
-        <button class="btn" id="kpKickedListClose" style="width:100%">关闭</button>
-      </div>`;
-      document.body.appendChild(modal);
-      document.getElementById('kpKickedListClose')?.addEventListener('click',()=>modal.remove());
-      modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
-      modal.querySelectorAll('[data-unkick]').forEach(btn=>{
-        btn.addEventListener('click',async()=>{
-          const pid=btn.dataset.unkick;
-          try{
-            await this.db.ref(`rooms/${this.roomId}/kicks/${pid}`).remove();
-            FB._toast(`已解除「${pid}」的踢出`,'success');
-            modal.remove();this._showKickedListModal();
-          }catch(e){FB._toast('操作失败','error');}
-        });
-      });
-    }).catch(()=>{FB._toast('读取失败','error');});
   },
 
   _showNpcModal(editId){
@@ -5879,6 +5835,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>{if(!FB.roomId)FB.rejoinRoom();},600);
 });
 
+// Document-level delegation for kick player actions (avoids dynamic re-render event loss)
+document.addEventListener('click',e=>{
+  const kickBtn=e.target.closest('[data-action="kick-player"]');
+  if(kickBtn&&FB.isKP){
+    e.stopPropagation();
+    KP._showKickConfirmModal(kickBtn.dataset.playerId,kickBtn.dataset.charName||kickBtn.dataset.playerId);
+    return;
+  }
+  const confirmBtn=e.target.closest('[data-action="confirm-kick"]');
+  if(confirmBtn){
+    const pid=document.getElementById('kickTargetId')?.value;
+    if(pid)KP._kickPlayer(pid);
+  }
+});
 // Background auto-leave: 20-minute timer while page is hidden
 let _bgTimer=null;
 function autoLeaveRoom(){
