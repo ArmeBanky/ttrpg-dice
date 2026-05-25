@@ -2164,6 +2164,19 @@ function renderCOCCard(char){
   }).join('');
   return`<div class="char-card">
     <div class="card-sec">
+      <div class="card-sec-title">调查员信息</div>
+      <div style="margin-bottom:6px">
+        <input type="text" id="ccInfoName" placeholder="调查员姓名" value="${esc(char.name||'')}" style="width:100%;font-size:16px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;box-sizing:border-box">
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input type="text" id="ccInfoOccupation" placeholder="职业" value="${esc(char.occupation||'')}" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px">
+        <input type="text" id="ccInfoGender" placeholder="性别" value="${esc(char.gender||'')}" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px">
+      </div>
+      <div>
+        <input type="text" id="ccInfoAge" placeholder="年龄" value="${esc(char.age||'')}" style="width:100px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px">
+      </div>
+    </div>
+    <div class="card-sec">
       <div class="card-sec-title">基础属性</div>
       <div class="attr-grid">${attrsHtml}</div>
       <div class="derived-grid">
@@ -2993,9 +3006,18 @@ const App={
       if(col)col.style.width=w+'px';
       this.save();
     });
-    panel.querySelector('#cpOccupation')?.addEventListener('change',e=>{char.occupation=e.target.value;this.save();});
-    panel.querySelector('#cpGender')?.addEventListener('change',e=>{char.gender=e.target.value;this.save();});
-    panel.querySelector('#cpAge')?.addEventListener('change',e=>{char.age=e.target.value;this.save();});
+    panel.querySelector('#cpOccupation')?.addEventListener('change',e=>{
+      char.occupation=e.target.value;this.save();
+      const l=document.getElementById('ccInfoOccupation');if(l)l.value=e.target.value;
+    });
+    panel.querySelector('#cpGender')?.addEventListener('change',e=>{
+      char.gender=e.target.value;this.save();
+      const l=document.getElementById('ccInfoGender');if(l)l.value=e.target.value;
+    });
+    panel.querySelector('#cpAge')?.addEventListener('change',e=>{
+      char.age=e.target.value;this.save();
+      const l=document.getElementById('ccInfoAge');if(l)l.value=e.target.value;
+    });
 
     // Background story
     panel.querySelector('#cpBgStory')?.addEventListener('input',e=>{char.background=e.target.value;this.save();});
@@ -3005,6 +3027,7 @@ const App={
       char.name=e.target.value.trim()||char.name;
       this.save();this.updateSel();this.updateTitle();
       FB._renderFooter?.();
+      const l=document.getElementById('ccInfoName');if(l)l.value=char.name;
     });
     // Inline name edit (click on cp-name-wrap in header)
     const nameWrap=panel.querySelector('#cpNameWrap');
@@ -3024,6 +3047,7 @@ const App={
           this.save();this.updateSel();this.updateTitle();
           FB._renderFooter?.();
           if(FB.roomId)FB.syncPlayer();
+          const l=document.getElementById('ccInfoName');if(l)l.value=v;
           this.renderTab();
         };
         inp.addEventListener('blur',commit,{once:true});
@@ -3306,6 +3330,28 @@ const App={
         const r=new FileReader();r.onload=ev=>{char.avatar=ev.target.result;this.save();this.renderCharTab();};r.readAsDataURL(f);
       });
       document.getElementById('bgStory')?.addEventListener('input',e=>{char.background=e.target.value;this.save();});
+
+      // Investigator info section (left card) — bi-directional sync with right panel
+      document.getElementById('ccInfoName')?.addEventListener('change',e=>{
+        char.name=e.target.value.trim()||char.name;
+        this.save();this.updateSel();this.updateTitle();
+        FB._renderFooter?.();
+        if(FB.roomId)FB.syncPlayer();
+        const rName=document.getElementById('cpNameDisplay');if(rName)rName.textContent=char.name;
+        const rInp=document.getElementById('cpCharName');if(rInp)rInp.value=char.name;
+      });
+      document.getElementById('ccInfoOccupation')?.addEventListener('change',e=>{
+        char.occupation=e.target.value;this.save();
+        const r=document.getElementById('cpOccupation');if(r)r.value=e.target.value;
+      });
+      document.getElementById('ccInfoGender')?.addEventListener('change',e=>{
+        char.gender=e.target.value;this.save();
+        const r=document.getElementById('cpGender');if(r)r.value=e.target.value;
+      });
+      document.getElementById('ccInfoAge')?.addEventListener('change',e=>{
+        char.age=e.target.value;this.save();
+        const r=document.getElementById('cpAge');if(r)r.value=e.target.value;
+      });
 
     }else{ // DND
       area.querySelectorAll('[data-dnd]').forEach(inp=>{
@@ -4146,9 +4192,20 @@ const FB={
         KP._judgeCharType='self';KP._judgeCharId=null;KP._judgeChar=null;
         KP.startListening();
         App.renderDiceTab?.();
-        // Listen for heartbeat removals → sync card wall in real-time
+        // Listen for heartbeat changes → track online players for card wall filter
         const hbListenRef=this.db.ref(`rooms/${this.roomId}/heartbeats`);
-        const hbRemovedFn=hbListenRef.on('child_removed',snap=>{KP._removePlayerFromConsole(snap.key);});
+        const hbAddedFn=hbListenRef.on('child_added',snap=>{
+          const d=snap.val();
+          if(d&&d.lastSeen&&(Date.now()-d.lastSeen)<90000){
+            KP._onlineIds.add(snap.key);
+            if(App.curTab==='dice')KP.renderConsole();
+          }
+        });
+        this._listeners.push({ref:hbListenRef,type:'child_added',fn:hbAddedFn});
+        const hbRemovedFn=hbListenRef.on('child_removed',snap=>{
+          KP._onlineIds.delete(snap.key);
+          KP._removePlayerFromConsole(snap.key);
+        });
         this._listeners.push({ref:hbListenRef,type:'child_removed',fn:hbRemovedFn});
         KP._startGhostCheck();
       }else{
@@ -4853,6 +4910,7 @@ const KP={
   // Firebase
   _playerCards:{},
   _cardListenerFn:null,
+  _onlineIds:new Set(),
   // Sync debounces
   _syncDebounce:null,
   _condSyncDebounce:{}, _ghostTimer:null,
@@ -4875,7 +4933,7 @@ const KP={
     if(this._cardListenerFn&&FB.db&&FB.roomId){
       try{FB.db.ref(`rooms/${FB.roomId}/playerCards`).off('value',this._cardListenerFn);}catch(e){}
     }
-    this._cardListenerFn=null;this._playerCards={};
+    this._cardListenerFn=null;this._playerCards={};this._onlineIds=new Set();
   },
 
   _removePlayerFromConsole(playerId){
@@ -5000,7 +5058,7 @@ const KP={
   // Ordered list of card entries for the wall
   _buildCardEntries(){
     const saved=this.getCardOrder();
-    const playerIds=Object.keys(this._playerCards).filter(p=>p!==FB.playerName).sort();
+    const playerIds=Object.keys(this._playerCards).filter(p=>p!==FB.playerName&&this._onlineIds.has(p)).sort();
     const npcs=this.getNpcs();
     const all=[{type:'self',id:'__self__'},...playerIds.map(p=>({type:'player',id:p})),...npcs.map(n=>({type:'npc',id:n.id}))];
     if(!saved.length)return all;
