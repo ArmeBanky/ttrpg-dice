@@ -1247,6 +1247,13 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 .fb-mbr-dot{position:absolute;bottom:1px;right:1px;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--surface-solid)}
 /* Fix 1: Hide HP/SAN/MP +/- buttons for non-KP players in a room */
 body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
+/* Task 2B: Cond-tags read-only for non-KP in room */
+body.fb-nonkp-room .cond-tag{pointer-events:none!important;cursor:default!important}
+body.fb-nonkp-room .cond-tag:hover{border-color:var(--border-bright)!important;color:var(--dim)!important;background:transparent!important}
+/* Task 2A: Condition visual effects on player bars */
+#cpHpBar.bar-unconscious{background:#6b7280!important;transition:background .4s}
+@keyframes sanInsanePulse{0%,100%{background:var(--purple,#8e44ad)}50%{background:#9b59b6}}
+#cpSanBar.bar-insane{animation:sanInsanePulse 1.5s ease-in-out infinite!important}
 /* Member list small condition tags */
 .fb-mbr-conds{display:flex;flex-wrap:wrap;gap:2px;padding:2px 0}
 .fb-mbr-cond{font-size:9px;padding:1px 5px;border-radius:2px;border:1px solid;opacity:.85}
@@ -1257,6 +1264,74 @@ body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
 .fb-mbr-cond.indefiniteInsane{background:rgba(109,40,217,.15);border-color:#7c3aed;color:#a78bfa}
 .fb-mbr-cond.permanentInsane{background:rgba(76,29,149,.15);border-color:#4c1d95;color:#8b5cf6}
 .fb-mbr-adj-nums{flex:1;text-align:center;font-size:10px;color:var(--text);font-family:var(--font-num)}
+/* ===== KP KICK FEATURE ===== */
+.fb-mbr-kick-btn{width:18px;height:18px;border-radius:50%;background:none;border:none;color:rgba(255,255,255,.25);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;opacity:0;transition:color .15s,opacity .15s;padding:0;line-height:1}
+.fb-mbr-item:hover .fb-mbr-kick-btn{opacity:1}
+.fb-mbr-kick-btn:hover{color:#ef4444!important}
+.kp-kicked-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center}
+.kp-kicked-card{background:var(--surface);border-radius:12px;border-top:4px solid #dc2626;padding:36px 32px;text-align:center;max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.7)}
+.kp-kicked-title{font-size:20px;font-weight:700;color:#f87171;margin-bottom:12px;font-family:var(--font-title)}
+.kp-kicked-body{font-size:13px;color:var(--text-muted);line-height:1.8;margin-bottom:24px}
+.kp-kicked-btn{border:1px solid rgba(201,168,76,.5);background:transparent;color:var(--gold);font-size:13px;padding:9px 28px;border-radius:6px;cursor:pointer;transition:background .2s;font-family:var(--font-body)}
+.kp-kicked-btn:hover{background:rgba(201,168,76,.15)}
+/* ===== KP MIDDLE PANEL (detail + builder) ===== */
+.kp-builder-wrap{position:relative;flex-shrink:0;display:none;height:100%;overflow:visible}
+.kp-builder-wrap.visible{display:block}
+.kp-builder-panel{width:300px;height:100%;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border);border-right:1px solid rgba(255,255,255,.04);overflow:hidden;transition:width .25s ease;flex-shrink:0}
+.kp-builder-panel.collapsed{width:0;overflow:hidden}
+.kp-builder-toggle{position:absolute;left:-16px;top:50%;transform:translateY(-50%);width:16px;height:48px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);border-right:none;border-radius:8px 0 0 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(201,168,76,.8);font-size:12px;z-index:30;user-select:none;transition:all .2s ease}
+.kp-builder-toggle:hover{background:rgba(201,168,76,.3);color:#c9a84c}
+.kp-builder-upper{overflow-y:auto;flex:1}
+/* ---- Detail pane (upper half) ---- */
+@keyframes kpMidFadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.kp-mid-empty{padding:24px 10px;text-align:center;color:var(--dim);font-size:12px;line-height:1.7}
+.kp-mid-portrait-row{display:flex;gap:8px;padding:8px 10px 5px;flex-shrink:0}
+.kp-mid-portrait{width:56px;height:76px;border-radius:5px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;font-family:var(--font-title);color:#fff;background:var(--surface2)}
+.kp-mid-portrait img{width:100%;height:100%;object-fit:cover;display:block}
+.kp-mid-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;justify-content:center}
+.kp-mid-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kp-mid-name-inp{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:12px;padding:2px 5px;font-family:var(--font-body);font-weight:700;box-sizing:border-box}
+.kp-mid-name-inp:focus{outline:none;border-color:rgba(201,168,76,.4)}
+.kp-mid-badges{display:flex;align-items:center;gap:4px;margin:1px 0}
+.kp-mid-badge{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.2px}
+.kp-mid-badge.mode{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+.kp-mid-badge.npc{background:rgba(249,115,22,.15);color:#fb923c;border:1px solid rgba(249,115,22,.3)}
+.kp-mid-badge.player{background:rgba(52,152,219,.15);color:#60a5fa;border:1px solid rgba(52,152,219,.28)}
+.kp-mid-occ-txt{font-size:11px;color:var(--text-muted)}
+.kp-mid-occ-row{display:flex;gap:3px}
+.kp-mid-occ-inp{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:3px;color:var(--text-muted);font-size:10px;padding:1px 4px;font-family:var(--font-body);box-sizing:border-box}
+.kp-mid-occ-inp:focus{outline:none;border-color:rgba(201,168,76,.3)}
+.kp-mid-sec{display:flex;align-items:center;justify-content:space-between;padding:4px 10px 2px;flex-shrink:0}
+.kp-mid-sec-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim)}
+.kp-mid-attr-wrap{padding:0 6px 2px;flex-shrink:0}
+.kp-mid-attr-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.kp-mid-attr-cell{background:rgba(0,0,0,.18);border-radius:3px;padding:3px 2px;text-align:center}
+.kp-mid-attr-cell.derived{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.12)}
+.kp-mid-attr-k{font-size:7px;color:var(--dim);letter-spacing:.2px}
+.kp-mid-attr-v{font-size:12px;font-family:var(--font-num);font-weight:700;color:var(--text);line-height:1.4}
+.kp-mid-attr-v.derived{color:var(--gold-dim);font-size:11px}
+.kp-mid-attr-inp{width:100%;text-align:center;background:transparent;border:none;color:var(--text);font-size:12px;font-family:var(--font-num);font-weight:700;padding:0;line-height:1.4;box-sizing:border-box}
+.kp-mid-attr-inp:focus{outline:none;background:rgba(201,168,76,.1);border-radius:2px}
+.kp-mid-skills-wrap{flex:1;overflow-y:auto;padding:0 6px 6px}
+.kp-mid-skills-wrap::-webkit-scrollbar{width:3px}
+.kp-mid-skills-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+.kp-mid-skill-row{display:flex;align-items:center;padding:2px 4px;border-radius:3px;gap:2px}
+.kp-mid-skill-row:hover{background:rgba(255,255,255,.04)}
+.kp-mid-skill-name{flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kp-mid-skill-val{width:28px;text-align:right;font-family:var(--font-num);font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0}
+.kp-mid-skill-half{width:24px;text-align:right;font-family:var(--font-num);font-size:10px;color:var(--dim);flex-shrink:0}
+.kp-mid-skill-fifth{width:20px;text-align:right;font-family:var(--font-num);font-size:10px;color:var(--dim);flex-shrink:0}
+.kp-mid-skill-judge{width:20px;text-align:center;cursor:pointer;color:var(--blue);font-size:10px;flex-shrink:0;opacity:0;transition:opacity .12s}
+.kp-mid-skill-row:hover .kp-mid-skill-judge{opacity:1}
+.kp-mid-skill-del{width:14px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:11px;padding:0;flex-shrink:0;opacity:0;line-height:1;transition:opacity .12s}
+.kp-mid-skill-row:hover .kp-mid-skill-del{opacity:1}
+.kp-mid-skill-del:hover{color:#ef4444}
+/* Toast */
+.kp-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:rgba(10,10,20,.96);border:1px solid var(--gold-border);border-radius:8px;padding:8px 20px;font-size:13px;color:var(--gold);z-index:9999;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+.kp-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Responsive */
+@media(max-width:1400px){.kp-builder-panel{width:260px}}
+@media(max-width:1100px){.kp-builder-panel{width:0!important}}
 /* ===== KP CARD WALL ===== */
 .kp-wall{display:flex;flex-direction:column;height:100%;background:var(--bg)}
 .kp-wall-toolbar{display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:1px solid var(--border-g);flex-shrink:0;height:36px}
@@ -1274,7 +1349,7 @@ body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
 .kp-card-drag{color:var(--dim);cursor:grab;flex-shrink:0;font-size:14px;line-height:1;padding:0 3px 0 0;transition:color .12s}
 .kp-card-drag:hover{color:var(--text-muted)}
 .kp-card-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--font-title);flex-shrink:0;overflow:hidden;color:#fff}
-.kp-card-name{font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kp-card-name{font-size:14px;font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kp-card-pid{font-size:10px;color:var(--dim);flex-shrink:0;max-width:70px;overflow:hidden;text-overflow:ellipsis}
 .kp-card-type{font-size:9px;padding:1px 5px;border-radius:3px;flex-shrink:0;font-weight:700;letter-spacing:.2px}
 .kp-card-type.player{background:rgba(52,152,219,.18);color:#60a5fa;border:1px solid rgba(52,152,219,.28)}
@@ -1301,8 +1376,8 @@ body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
 .kp-card-adj{width:20px;height:20px;border:1px solid rgba(255,255,255,.1);border-radius:3px;background:rgba(255,255,255,.04);cursor:pointer;color:var(--text);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .12s,border-color .12s;padding:0}
 .kp-card-adj:hover{background:rgba(255,255,255,.12);border-color:rgba(201,168,76,.38)}
 .kp-card-bar-nums{font-size:11px;font-family:var(--font-num);color:var(--text-muted);width:50px;text-align:center;flex-shrink:0}
-.kp-card-bar-track{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
-.kp-card-bar-fill{height:5px;border-radius:2px;transition:width .3s}
+.kp-card-bar-track{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.kp-card-bar-fill{height:6px;border-radius:2px;transition:width .3s}
 .kp-card-bar-fill.hp{background:var(--green)}
 .kp-card-bar-fill.san{background:var(--blue)}
 .kp-card-bar-fill.mp{background:var(--purple)}
@@ -1317,11 +1392,11 @@ body.fb-nonkp-room .cp-adj[data-bar]{display:none!important}
 .kp-cond.active.indefiniteInsane{background:rgba(109,40,217,.2);border-color:#7c3aed;color:#a78bfa;box-shadow:0 0 6px rgba(109,40,217,.22)}
 .kp-cond.active.permanentInsane{background:rgba(76,29,149,.2);border-color:#4c1d95;color:#8b5cf6;box-shadow:0 0 6px rgba(76,29,149,.22)}
 /* Card action buttons */
-.kp-card-actions{display:flex;gap:6px}
-.kp-card-judge-btn{flex:1;font-size:11px;padding:4px 0;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;transition:all .15s;font-family:var(--font-body)}
+.kp-card-actions{display:flex;gap:4px}
+.kp-card-judge-btn{flex:1;font-size:11px;height:32px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;transition:all .15s;font-family:var(--font-body);padding:0}
 .kp-card-judge-btn:hover{border-color:var(--gold-border);color:var(--gold)}
 .kp-card-judge-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1)}
-.kp-card-detail-btn{font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;transition:all .15s;font-family:var(--font-body);flex-shrink:0;white-space:nowrap}
+.kp-card-detail-btn{flex:1;font-size:11px;height:32px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;transition:all .15s;font-family:var(--font-body);padding:0;white-space:nowrap}
 .kp-card-detail-btn:hover{border-color:var(--border-bright);color:var(--text-muted)}
 /* "当前判定" indicator near skill check title */
 .kp-judge-indicator{display:none;align-items:center;gap:5px;padding:2px 8px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.28);border-radius:4px;font-size:11px;color:var(--gold);cursor:pointer;position:relative;flex-shrink:0;white-space:nowrap;margin-left:auto}
@@ -1533,6 +1608,13 @@ body.perm-insane #app{animation:permInsanePulse 2s ease-in-out infinite}
             </div>
           </div>
           <div id="diceResults"><div class="empty">选择骰子数量后点击「投掷」</div></div>
+        </div>
+        <!-- MIDDLE PANEL: detail (upper) + NPC builder (lower), KP only, collapsible -->
+        <div class="kp-builder-wrap" id="kpBuilderWrap">
+          <div class="kp-builder-toggle" id="kpBuilderToggle" title="展开/收缩">‹</div>
+          <div class="kp-builder-panel" id="kpBuilderPanel">
+            <div class="kp-builder-upper" id="kpBuilderUpper"><div class="kp-mid-empty">点击右侧卡片「详情」<br>或「以此角色判定」查看</div></div>
+          </div>
         </div>
         <!-- RIGHT: character panel -->
         <div class="game-right" id="charPanel"></div>
@@ -2579,7 +2661,28 @@ const App={
   renderDiceTab(){
     if(FB.isKP&&FB.roomId){
       KP.renderConsole();
+      // Setup NPC builder panel (only once, then init persists)
+      const wrap=document.getElementById('kpBuilderWrap');
+      if(wrap&&!wrap.classList.contains('visible')){
+        KP._initBuilderPanel();
+      }
+      // Adjust game-layout for 3-column KP mode
+      const gl=document.querySelector('#tab-dice .game-layout');
+      if(gl){gl.style.display='flex';gl.style.gridTemplateColumns='';}
+      const gl2=document.getElementById('charPanel');
+      if(gl2)gl2.style.width='340px';
+      const gl3=document.querySelector('#tab-dice .game-left');
+      if(gl3)gl3.style.flex='1';
     }else{
+      // Reset layout for non-KP
+      const wrap=document.getElementById('kpBuilderWrap');
+      if(wrap)wrap.classList.remove('visible');
+      const gl=document.querySelector('#tab-dice .game-layout');
+      if(gl){gl.style.display='';gl.style.gridTemplateColumns='';}
+      const cp=document.getElementById('charPanel');
+      if(cp)cp.style.width='';
+      const gl2=document.querySelector('#tab-dice .game-left');
+      if(gl2)gl2.style.flex='';
       document.getElementById('charPanel').innerHTML=genCharPanel(this.char);
       this.bindCharPanel(this.char);
     }
@@ -3894,6 +3997,9 @@ const FB={
       if(!this.roomId){this._toast('房间ID只能含字母、数字、-、_','error');return;}
       this.playerName=(playerName.trim()||'玩家').slice(0,16);
       this._setDot('connecting');
+      // Check if player was previously kicked from this room
+      const kickCheckSnap=await this.db.ref(`rooms/${this.roomId}/kicks/${this.playerName}`).once('value');
+      if(kickCheckSnap.exists()){this._toast('你已被 KP 移出该房间，无法重新加入','error');this.roomId=null;this._setDot('');return;}
       // First to join becomes KP/host
       this._hostRef=this.db.ref(`rooms/${this.roomId}/host`);
       const hostSnap=await this._hostRef.once('value');
@@ -3949,7 +4055,19 @@ const FB={
         KP.startListening();
         App.renderDiceTab?.();
       }else{
+        await _checkJoinNameConflict();
         _syncPlayerCard();
+        // Non-KP: listen for kick from KP
+        const kickRef=this.db.ref(`rooms/${this.roomId}/kicks/${this.playerName}`);
+        const kickFn=kickRef.on('value',snap=>{if(snap.exists())_showKickedOverlay();});
+        this._listeners.push({ref:kickRef,type:'value',fn:kickFn});
+        // Non-KP: listen to playerStatus conditions assigned by KP
+        const statusRef=this.db.ref(`rooms/${this.roomId}/playerStatus/${this.playerName}/conditions`);
+        const statusFn=statusRef.on('value',snap=>{
+          const conds=snap.val();
+          if(conds)_applyConditionEffects(conds);
+        });
+        this._listeners.push({ref:statusRef,type:'value',fn:statusFn});
       }
       this._toast('已连接到 '+this.roomId+(this.isKP?' · 你是KP':''),'success');
     }catch(e){
@@ -3960,6 +4078,7 @@ const FB={
   },
 
   leaveRoom(){
+    clearTimeout(_bgTimer);_bgTimer=null;
     document.body.classList.remove('fb-nonkp-room');
     this._stopHeartbeat();
     this._clearRoomState();
@@ -4425,6 +4544,9 @@ const FB={
         const activeConds=Object.keys(condMap).filter(k=>condMap[k]);
         if(activeConds.length)condTagsHtml=`<div class="fb-mbr-conds">${activeConds.map(k=>`<span class="fb-mbr-cond ${k}">${condLbls[k]}</span>`).join('')}</div>`;
       }
+      const kickBtn=this.isKP&&!isThisKP
+        ?`<button class="fb-mbr-kick-btn" data-kick-player="${esc(playerName)}" data-kick-char="${esc(displayName)}" title="踢出玩家">⊘</button>`
+        :'';
       return`<div class="fb-mbr-item" style="flex-wrap:wrap">
         <div class="fb-mbr-avatar-wrap"><div class="fb-mbr-avatar" style="background:${avatarBg}">${avatarContent}</div><span class="fb-mbr-dot" style="background:${dotColor}"></span></div>
         <div class="fb-mbr-info">
@@ -4433,10 +4555,19 @@ const FB={
           ${chLabel}
         </div>
         ${isThisKP?`<span class="fb-mbr-kp-badge">KP</span>`:''}
+        ${kickBtn}
         ${barsHtml?`<div class="fb-mbr-bars">${barsHtml}</div>`:''}
         ${condTagsHtml}
       </div>`;
     }).join('');
+    if(this.isKP){
+      el.querySelectorAll('[data-kick-player]').forEach(btn=>{
+        btn.addEventListener('click',e=>{
+          e.stopPropagation();
+          this._kickPlayer(btn.dataset.kickPlayer,btn.dataset.kickChar);
+        });
+      });
+    }
   },
 
   _renderFooter(){
@@ -4721,6 +4852,8 @@ const KP={
     panel.innerHTML=this._genWallHtml();
     this._bindWallEvents();
     this._updateJudgeIndicator();
+    // Refresh detail view if one is open (char data may have changed)
+    if(this._detailType&&this._detailId)this._renderDetailPane();
   },
 
   _genWallHtml(){
@@ -4732,6 +4865,7 @@ const KP={
         <button class="btn" id="kpCollapseAll" style="padding:2px 8px;font-size:11px">全收起</button>
         <div style="flex:1"></div>
         <button class="btn" id="kpImportNpc" style="padding:2px 8px;font-size:11px;border-color:rgba(249,115,22,.5);color:#fb923c">＋ 导入NPC</button>
+        <button class="btn" id="kpKickedList" style="padding:2px 8px;font-size:11px;border-color:rgba(239,68,68,.45);color:#f87171">⊘ 踢出名单</button>
       </div>
       <div class="kp-wall-scroll" id="kpWallScroll">${cards||'<div class="empty" style="padding:20px;text-align:center;color:var(--dim)">暂无角色数据</div>'}</div>
     </div>`;
@@ -4781,6 +4915,7 @@ const KP={
     document.getElementById('kpExpandAll')?.addEventListener('click',()=>{this._collapsedCards.clear();this.renderConsole();});
     document.getElementById('kpCollapseAll')?.addEventListener('click',()=>{this._buildCardEntries().forEach(({type,id})=>this._collapsedCards.add(type+':'+id));this.renderConsole();});
     document.getElementById('kpImportNpc')?.addEventListener('click',()=>this._showNpcModal());
+    document.getElementById('kpKickedList')?.addEventListener('click',()=>this._showKickedListModal());
     // Card toggle
     scroll.querySelectorAll('[data-card-toggle]').forEach(hdr=>{
       hdr.addEventListener('click',e=>{
@@ -4816,16 +4951,16 @@ const KP={
         const[type,...rest]=cid.split(':');const id=rest.join(':');
         const isAlreadyJudging=this._judgeCharType===type&&(type==='self'||this._judgeCharId===id);
         this.setJudgeChar(isAlreadyJudging?'self':'',isAlreadyJudging?null:id);
-        if(!isAlreadyJudging)this.setJudgeChar(type,type==='self'?null:id);
+        if(!isAlreadyJudging){this.setJudgeChar(type,type==='self'?null:id);if(type!=='self')this.showDetail(type,id);}
       });
     });
-    // Detail button
+    // Detail button → load into builder panel lower half
     scroll.querySelectorAll('[data-card-detail]').forEach(btn=>{
       btn.addEventListener('click',e=>{
         e.stopPropagation();
         const cid=btn.dataset.cardDetail;
         const[type,...rest]=cid.split(':');const id=rest.join(':');
-        this._showDetailModal(type,id);
+        this.showDetail(type,id);
       });
     });
     // NPC edit/delete
@@ -4952,10 +5087,23 @@ const KP={
       clearTimeout(this._condSyncDebounce[id]);
       this._condSyncDebounce[id]=setTimeout(()=>{
         if(!FB.db||!FB.roomId)return;
+        // Build unified conditions object using new 6-key model
+        const cd=char.coc?.conditions||{};const mad=char.coc?.madness||{};
+        const unified={
+          injured:!!cd.injured,
+          severelyInjured:!!(cd.severelyInjured||cd.majorWound),
+          unconscious:!!cd.unconscious,
+          tempInsane:!!(cd.tempInsane||mad.temporary),
+          indefiniteInsane:!!(cd.indefiniteInsane||mad.indefinite),
+          permanentInsane:!!(cd.permanentInsane||cd.permInsanity),
+        };
+        // Write to dedicated playerStatus path (survives player reconnect)
+        try{FB.db.ref(`rooms/${FB.roomId}/playerStatus/${id}/conditions`).set(unified).catch(()=>{});}catch(e){}
+        // Also update the players node for backward compat
         const upd={};
         if(char.coc?.madness)upd['char/madness']=char.coc.madness;
         if(char.coc?.conditions)upd['char/conditions']=char.coc.conditions;
-        try{FB.db.ref(`rooms/${FB.roomId}/players/${id}`).update(upd).catch(()=>{});}catch(e){}
+        if(Object.keys(upd).length)try{FB.db.ref(`rooms/${FB.roomId}/players/${id}`).update(upd).catch(()=>{});}catch(e){}
       },300);
     }else{
       const ac=App.char;if(!ac?.coc||!char.coc)return;
@@ -4980,6 +5128,352 @@ const KP={
     const npcs=this.getNpcs();const idx=npcs.findIndex(n=>n.id===id);
     if(idx>=0){npcs[idx]=char;this.saveNpcs(npcs);}
   },
+
+  /* ── KP NPC Builder Panel ───────────────────────────────── */
+  _builderChar:null,
+  _detailType:null,_detailId:null,_detailTab:'attrs',
+  _builderSplitPct:50, // upper section %
+
+  _initBuilderPanel(){
+    const wrap=document.getElementById('kpBuilderWrap');if(!wrap)return;
+    wrap.classList.add('visible');
+    const panel=document.getElementById('kpBuilderPanel');
+    const toggle=document.getElementById('kpBuilderToggle');
+    const collapsed=localStorage.getItem('kp_middle_panel_collapsed')==='true';
+    if(window.innerWidth<1100){panel.classList.add('collapsed');toggle.textContent='›';toggle.title='展开详情栏';}
+    else{panel.classList.toggle('collapsed',collapsed);toggle.textContent=collapsed?'›':'‹';toggle.title=collapsed?'展开详情栏':'收起详情栏';}
+    this._renderDetailPane();
+    toggle.addEventListener('click',()=>{
+      const c=panel.classList.toggle('collapsed');
+      toggle.textContent=c?'›':'‹';
+      toggle.title=c?'展开详情栏':'收起详情栏';
+      localStorage.setItem('kp_middle_panel_collapsed',String(c));
+    });
+  },
+
+  _newBuilderChar(){return newChar('新NPC','COC');},
+
+  /* Upper half: character detail view */
+  _renderDetailPane(){
+    const upper=document.getElementById('kpBuilderUpper');if(!upper)return;
+    const type=this._detailType,id=this._detailId;
+    if(!type||!id){
+      upper.innerHTML='<div class="kp-mid-empty">点击右侧卡片「详情」<br>或「以此角色判定」查看角色详情</div>';
+      return;
+    }
+    const char=this._getCardChar(type,id);
+    if(!char){upper.innerHTML='<div class="kp-mid-empty">角色数据不存在</div>';return;}
+    const isPlayer=type==='player';
+    const c=char.coc||{};const dv=cocDerived(c);const ex=cocExtras(c);
+    const fl=n=>Math.floor(n);
+    // Portrait
+    const av=char._avatarCompressed||char.avatar||'';
+    const avBg=nameHashColor(char.name||'?');
+    const initials=(char.name||'?')[0].toUpperCase();
+    const portrait=av?`<img src="${av}">`:`<span>${initials}</span>`;
+    const portraitEl=`<div class="kp-mid-portrait"${!av?' style="background:'+avBg+'"':''}>${portrait}</div>`;
+    // Name
+    const nameDom=isPlayer
+      ?`<div class="kp-mid-name">${esc(char.name||'角色')}</div>`
+      :`<div class="kp-mid-name"><input type="text" class="kp-mid-name-inp" id="kpMidName" value="${esc(char.name||'')}" maxlength="20"></div>`;
+    // Badges
+    const modeBadge=`<span class="kp-mid-badge mode">${char.mode||'COC'}</span>`;
+    const typeBadge=isPlayer?`<span class="kp-mid-badge player">玩家</span>`:`<span class="kp-mid-badge npc">NPC</span>`;
+    // Occ/gender/age
+    let occDom;
+    if(isPlayer){
+      const occTxt=[char.occupation,char.gender,char.age].filter(Boolean).join(' · ');
+      occDom=`<div class="kp-mid-occ-txt">${esc(occTxt)||'—'}</div>`;
+    }else{
+      occDom=`<div class="kp-mid-occ-row">
+        <input class="kp-mid-occ-inp" id="kpMidOcc" value="${esc(char.occupation||'')}" placeholder="职业" style="flex:1;min-width:0">
+        <input class="kp-mid-occ-inp" id="kpMidGender" value="${esc(char.gender||'')}" placeholder="性别" style="width:34px">
+        <input class="kp-mid-occ-inp" id="kpMidAge" value="${esc(char.age||'')}" placeholder="年龄" style="width:34px">
+      </div>`;
+    }
+    // 4-col attr grid: STR DEX CON DB / SIZ APP INT 体格 / POW EDU LCK 闪避
+    const attrRows=[
+      [['STR',c.STR??0,false],['DEX',c.DEX??0,false],['CON',c.CON??0,false],['DB',ex.db,true]],
+      [['SIZ',c.SIZ??0,false],['APP',c.APP??0,false],['INT',c.INT??0,false],['体格',ex.build,true]],
+      [['POW',c.POW??0,false],['EDU',c.EDU??0,false],['LCK',c.LCK??0,false],['闪避',ex.dodge,true]],
+    ];
+    const derIdMap={'DB':'kpMidDerDB','体格':'kpMidDerBuild','闪避':'kpMidDerDodge'};
+    const attrGrid=attrRows.map(row=>row.map(([k,v,isDerived])=>{
+      const cellCls='kp-mid-attr-cell'+(isDerived?' derived':'');
+      if(!isDerived&&!isPlayer){
+        return`<div class="${cellCls}"><div class="kp-mid-attr-k">${k}</div><input type="number" class="kp-mid-attr-inp" data-mid-attr="${k}" value="${v}" min="1" max="100"></div>`;
+      }
+      const idAttr=isDerived?` id="${derIdMap[k]}"`:` id="kpMidAv${k}"`;
+      return`<div class="${cellCls}"><div class="kp-mid-attr-k">${k}</div><div class="kp-mid-attr-v${isDerived?' derived':''}"${idAttr}>${v}</div></div>`;
+    }).join('')).join('');
+    // Skills
+    const skills=c.skills||[];
+    const addBtn=isPlayer?'':`<button class="btn" id="kpMidAddSk" style="font-size:9px;padding:1px 5px">+ 添加</button>`;
+    const skillRows=skills.map((sk,i)=>{
+      const tot=(sk.base||0)+(sk.prof||0)+(sk.interest||0);
+      if(!tot&&isPlayer)return'';
+      const nameCellContent=isPlayer
+        ?esc(sk.name)
+        :`<input type="text" data-mid-sk-name="${i}" value="${esc(sk.name)}" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:10px;padding:1px 3px;box-sizing:border-box">`;
+      const valCellContent=isPlayer
+        ?tot
+        :`<input type="number" data-mid-sk-val="${i}" value="${tot}" style="width:28px;text-align:center;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:2px;color:var(--gold);font-family:var(--font-num);font-size:11px;padding:1px;font-weight:700;box-sizing:border-box">`;
+      const delBtn=isPlayer?'':`<button class="kp-mid-skill-del" data-mid-sk-del="${i}">×</button>`;
+      return`<div class="kp-mid-skill-row">
+        <span class="kp-mid-skill-name">${nameCellContent}</span>
+        <span class="kp-mid-skill-val">${valCellContent}</span>
+        <span class="kp-mid-skill-half">${fl(tot/2)}</span>
+        <span class="kp-mid-skill-fifth">${fl(tot/5)}</span>
+        <span class="kp-mid-skill-judge" data-mid-judge="${esc(sk.name)}" data-mid-judge-val="${tot}">▶</span>
+        ${delBtn}
+      </div>`;
+    }).join('');
+    upper.innerHTML=`<div class="kp-mid-detail" style="animation:kpMidFadeIn .15s ease">
+      <div class="kp-mid-portrait-row">${portraitEl}<div class="kp-mid-info">${nameDom}<div class="kp-mid-badges">${modeBadge}${typeBadge}</div>${occDom}</div></div>
+      <div class="kp-mid-sec"><span class="kp-mid-sec-lbl">属性</span>${isPlayer?'<span style="font-size:9px;color:var(--dim)">只读</span>':''}</div>
+      <div class="kp-mid-attr-wrap"><div class="kp-mid-attr-grid-4">${attrGrid}</div></div>
+      <div class="kp-mid-sec"><span class="kp-mid-sec-lbl">技能</span>${addBtn}</div>
+      <div class="kp-mid-skills-wrap">${skillRows||'<div style="font-size:11px;color:var(--dim);padding:4px 6px">暂无技能</div>'}</div>
+    </div>`;
+    // NPC-editable bindings
+    if(!isPlayer){
+      upper.querySelector('#kpMidName')?.addEventListener('change',e=>{
+        const newName=e.target.value.trim()||char.name;
+        if(newName!==char.name){
+          const otherNpcs=this.getNpcs().filter(n=>n.id!==id);
+          const playerNames=Object.values(this._playerCards||{}).map(p=>p.characterName).filter(Boolean);
+          if(otherNpcs.some(n=>n.name===newName)||playerNames.includes(newName)){
+            e.target.value=char.name;
+            FB._toast(`已存在名为「${newName}」的角色，请使用其他名称`,'error');return;
+          }
+        }
+        char.name=newName;this._saveNpcChar(id,char);
+      });
+      upper.querySelector('#kpMidOcc')?.addEventListener('change',e=>{char.occupation=e.target.value;this._saveNpcChar(id,char);});
+      upper.querySelector('#kpMidGender')?.addEventListener('change',e=>{char.gender=e.target.value;this._saveNpcChar(id,char);});
+      upper.querySelector('#kpMidAge')?.addEventListener('change',e=>{char.age=e.target.value;this._saveNpcChar(id,char);});
+      const updateDerived=()=>{
+        const dv2=cocDerived(c);const ex2=cocExtras(c);
+        const ddb=document.getElementById('kpMidDerDB');if(ddb)ddb.textContent=ex2.db;
+        const dbld=document.getElementById('kpMidDerBuild');if(dbld)dbld.textContent=ex2.build;
+        const ddg=document.getElementById('kpMidDerDodge');if(ddg)ddg.textContent=ex2.dodge;
+        this._saveNpcChar(id,char);
+      };
+      upper.querySelectorAll('[data-mid-attr]').forEach(inp=>{
+        inp.addEventListener('change',()=>{c[inp.dataset.midAttr]=parseInt(inp.value)||0;updateDerived();});
+        inp.addEventListener('wheel',e=>{e.preventDefault();inp.value=(parseInt(inp.value)||0)+(e.deltaY<0?1:-1);c[inp.dataset.midAttr]=parseInt(inp.value)||0;updateDerived();},{passive:false});
+      });
+      upper.querySelectorAll('[data-mid-sk-del]').forEach(btn=>{
+        btn.addEventListener('click',()=>{c.skills.splice(parseInt(btn.dataset.midSkDel),1);this._saveNpcChar(id,char);this._renderDetailPane();});
+      });
+      upper.querySelectorAll('[data-mid-sk-name]').forEach(inp=>{
+        inp.addEventListener('change',()=>{const i=parseInt(inp.dataset.midSkName);if(c.skills[i])c.skills[i].name=inp.value;this._saveNpcChar(id,char);});
+      });
+      upper.querySelectorAll('[data-mid-sk-val]').forEach(inp=>{
+        inp.addEventListener('change',()=>{
+          const i=parseInt(inp.dataset.midSkVal);
+          if(c.skills[i]){c.skills[i].base=parseInt(inp.value)||0;c.skills[i].prof=0;c.skills[i].interest=0;}
+          const tot=parseInt(inp.value)||0;
+          const row=inp.closest('.kp-mid-skill-row');
+          if(row){row.querySelector('.kp-mid-skill-half').textContent=fl(tot/2);row.querySelector('.kp-mid-skill-fifth').textContent=fl(tot/5);}
+          row?.querySelector('[data-mid-judge]')?.setAttribute('data-mid-judge-val',tot);
+          this._saveNpcChar(id,char);
+        });
+      });
+      upper.querySelector('#kpMidAddSk')?.addEventListener('click',()=>{
+        if(!c.skills)c.skills=[];
+        c.skills.push({id:uid(),name:'新技能',base:0,prof:0,interest:0});
+        this._saveNpcChar(id,char);this._renderDetailPane();
+      });
+    }
+    // Skill judge (all types)
+    upper.querySelectorAll('[data-mid-judge]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        this.setJudgeChar(type,type==='self'?null:id);
+        this._triggerSkillJudge(btn.dataset.midJudge,parseInt(btn.dataset.midJudgeVal)||0);
+      });
+    });
+  },
+
+  /* Lower half: NPC quick builder form */
+  _renderBuilderPane(){
+    const lower=document.getElementById('kpBuilderLower');if(!lower)return;
+    const c=this._builderChar||this._newBuilderChar();
+    const coc=c.coc;const dv=cocDerived(coc);const ex=cocExtras(coc);
+    const ATTRS=[['STR','力量'],['DEX','敏捷'],['CON','体质'],['SIZ','体型'],['APP','外貌'],['INT','智力'],['POW','意志'],['EDU','教育'],['LCK','幸运']];
+    const attrGrid=ATTRS.map(([k])=>`<div class="kp-b-attr-cell"><span class="kp-b-attr-lbl">${k}</span><input type="number" class="kp-b-attr-inp" data-battr="${k}" value="${coc[k]||0}" min="1" max="100"></div>`).join('');
+    const skills=coc.skills||[];
+    const skillRows=skills.map((sk,i)=>{
+      const base=sk.base||0,prof=sk.prof||0,tot=base+prof+(sk.interest||0);
+      return`<div class="kp-b-skill-row">
+        <input class="kp-b-skill-nm" data-bsk-name="${i}" value="${esc(sk.name)}" placeholder="技能名">
+        <input type="number" class="kp-b-skill-val" data-bsk-base="${i}" value="${base}" min="0" max="100" title="基础值" style="width:30px">
+        <span style="font-size:9px;color:var(--dim)">+</span>
+        <input type="number" class="kp-b-skill-val" data-bsk-prof="${i}" value="${prof}" min="0" max="100" title="职业点" style="width:30px">
+        <span style="font-size:9px;color:var(--gold);font-weight:700;min-width:22px;text-align:center" id="kpBskTot${i}">${tot}</span>
+        <button class="kp-b-skill-del" data-bsk-del="${i}">×</button>
+      </div>`;
+    }).join('');
+    const weapons=coc.weapons||[];
+    const wpnRows=weapons.map((w,i)=>`<div class="kp-b-wpn-row">
+      <input class="kp-b-wpn-nm" data-bwpn-name="${i}" value="${esc(w.name||'')}" placeholder="武器名">
+      <input type="number" class="kp-b-wpn-sk" data-bwpn-sk="${i}" value="${w.skill||0}" placeholder="%" min="0" max="100">
+      <input class="kp-b-wpn-dmg" data-bwpn-dmg="${i}" value="${esc(w.damage||'')}" placeholder="伤害">
+      <span class="kp-b-wpn-pen" title="穿透">穿</span>
+      <input type="checkbox" data-bwpn-pen="${i}" ${w.pen?'checked':''} style="width:13px;flex-shrink:0;cursor:pointer">
+      <button class="kp-b-wpn-del" data-bwpn-del="${i}">×</button>
+    </div>`).join('');
+    const av=c._avatarCompressed||c.avatar||'';
+    const avBg=av?'':`background:${nameHashColor(c.name)};`;
+    const avContent=av?`<img src="${av}">`:`<span>${(c.name[0]||'?').toUpperCase()}</span>`;
+    lower.innerHTML=`<div class="kp-bld-wrap">
+      <div class="kp-bld-title">⚡ 快速构建 NPC</div>
+      <div class="kp-bld-inner">
+        <div class="kp-bld-av-row">
+          <div class="kp-bld-av" id="kpBldAvWrap" style="${avBg}" title="点击上传头像">${avContent}<input type="file" accept="image/*" id="kpBldAvFile" style="display:none"></div>
+          <div class="kp-bld-info-col">
+            <input class="kp-b-inp" id="kpBldName" value="${esc(c.name)}" placeholder="NPC名称" maxlength="20" style="font-weight:600;font-size:12px">
+            <div class="kp-b-row" style="margin:0">
+              <input class="kp-b-inp" id="kpBldOcc" value="${esc(c.occupation||'')}" placeholder="职业" style="flex:2;font-size:11px">
+              <input class="kp-b-inp" id="kpBldGender" value="${esc(c.gender||'')}" placeholder="性别" style="width:36px;font-size:11px">
+              <input class="kp-b-inp" id="kpBldAge" value="${esc(c.age||'')}" placeholder="年龄" style="width:36px;font-size:11px">
+            </div>
+          </div>
+        </div>
+        <div class="kp-b-sec">属性</div>
+        <div class="kp-b-attr-grid">${attrGrid}</div>
+        <div class="kp-b-sec">衍生属性</div>
+        <div class="kp-b-derived">
+          <div class="kp-b-derived-cell"><div class="kp-b-derived-k">HP</div><div class="kp-b-derived-v" id="kpBldHp">${dv.hpMax}</div></div>
+          <div class="kp-b-derived-cell"><div class="kp-b-derived-k">SAN</div><div class="kp-b-derived-v" id="kpBldSan">${dv.sanMax}</div></div>
+          <div class="kp-b-derived-cell"><div class="kp-b-derived-k">MP</div><div class="kp-b-derived-v" id="kpBldMp">${dv.mpMax}</div></div>
+          <div class="kp-b-derived-cell"><div class="kp-b-derived-k">DB</div><div class="kp-b-derived-v" id="kpBldDb">${ex.db}</div></div>
+          <div class="kp-b-derived-cell"><div class="kp-b-derived-k">体格</div><div class="kp-b-derived-v" id="kpBldBuild">${ex.build}</div></div>
+          <div class="kp-b-derived-cell"><div class="kp-b-derived-k">闪避</div><div class="kp-b-derived-v" id="kpBldDodge">${ex.dodge}</div></div>
+        </div>
+        <div class="kp-b-sec">技能<button class="btn" id="kpBldAddSk" style="font-size:9px;padding:1px 5px">+ 添加</button></div>
+        <div id="kpBldSkills">${skillRows||'<div style="font-size:11px;color:var(--dim);padding:2px 0">暂无技能</div>'}</div>
+        <div class="kp-b-sec">武器<button class="btn" id="kpBldAddWpn" style="font-size:9px;padding:1px 5px">+ 添加</button></div>
+        <div id="kpBldWeapons">${wpnRows||'<div style="font-size:11px;color:var(--dim);padding:2px 0">暂无武器</div>'}</div>
+      </div>
+      <div class="kp-bld-actions">
+        <button class="btn" id="kpBuilderImport">📋 导入文本</button>
+        <button class="btn danger" id="kpBuilderClear">🗑 清空</button>
+        <button class="btn primary" id="kpBuilderSave">✓ 保存为NPC</button>
+      </div>
+    </div>`;
+    // Attr recalc
+    lower.querySelectorAll('[data-battr]').forEach(inp=>{
+      const recalc=()=>{
+        const k=inp.dataset.battr;coc[k]=parseInt(inp.value)||0;
+        const dv2=cocDerived(coc);const ex2=cocExtras(coc);
+        const ids={kpBldHp:dv2.hpMax,kpBldSan:dv2.sanMax,kpBldMp:dv2.mpMax,kpBldDb:ex2.db,kpBldBuild:ex2.build,kpBldDodge:ex2.dodge};
+        Object.entries(ids).forEach(([elId,val])=>{const el=document.getElementById(elId);if(el)el.textContent=val;});
+      };
+      inp.addEventListener('change',recalc);
+      inp.addEventListener('wheel',e=>{e.preventDefault();inp.value=(parseInt(inp.value)||0)+(e.deltaY<0?1:-1);recalc();},{passive:false});
+    });
+    // Name/occ/gender/age
+    lower.querySelector('#kpBldName')?.addEventListener('change',e=>{c.name=e.target.value.trim()||c.name;});
+    lower.querySelector('#kpBldOcc')?.addEventListener('change',e=>{c.occupation=e.target.value;});
+    lower.querySelector('#kpBldGender')?.addEventListener('change',e=>{c.gender=e.target.value;});
+    lower.querySelector('#kpBldAge')?.addEventListener('change',e=>{c.age=e.target.value;});
+    // Skills
+    lower.querySelectorAll('[data-bsk-del]').forEach(btn=>{
+      btn.addEventListener('click',()=>{coc.skills.splice(parseInt(btn.dataset.bskDel),1);this._renderBuilderPane();});
+    });
+    lower.querySelectorAll('[data-bsk-name]').forEach(inp=>{
+      inp.addEventListener('change',()=>{const i=parseInt(inp.dataset.bskName);if(coc.skills[i])coc.skills[i].name=inp.value;});
+    });
+    const recalcSkTot=bpanel=>{
+      const i=parseInt(bpanel);
+      const base=parseInt(lower.querySelector(`[data-bsk-base="${i}"]`)?.value)||0;
+      const prof=parseInt(lower.querySelector(`[data-bsk-prof="${i}"]`)?.value)||0;
+      if(coc.skills[i]){coc.skills[i].base=base;coc.skills[i].prof=prof;}
+      const el=lower.querySelector(`#kpBskTot${i}`);if(el)el.textContent=base+prof;
+    };
+    lower.querySelectorAll('[data-bsk-base]').forEach(inp=>{inp.addEventListener('change',()=>recalcSkTot(inp.dataset.bskBase));});
+    lower.querySelectorAll('[data-bsk-prof]').forEach(inp=>{inp.addEventListener('change',()=>recalcSkTot(inp.dataset.bskProf));});
+    lower.querySelector('#kpBldAddSk')?.addEventListener('click',()=>{
+      if(!coc.skills)coc.skills=[];
+      coc.skills.push({id:uid(),name:'新技能',base:0,prof:0,interest:0});
+      this._renderBuilderPane();
+    });
+    // Weapons
+    lower.querySelectorAll('[data-bwpn-del]').forEach(btn=>{
+      btn.addEventListener('click',()=>{coc.weapons.splice(parseInt(btn.dataset.bwpnDel),1);this._renderBuilderPane();});
+    });
+    lower.querySelectorAll('[data-bwpn-name]').forEach(inp=>{inp.addEventListener('change',()=>{const i=parseInt(inp.dataset.bwpnName);if(coc.weapons[i])coc.weapons[i].name=inp.value;});});
+    lower.querySelectorAll('[data-bwpn-sk]').forEach(inp=>{inp.addEventListener('change',()=>{const i=parseInt(inp.dataset.bwpnSk);if(coc.weapons[i])coc.weapons[i].skill=parseInt(inp.value)||0;});});
+    lower.querySelectorAll('[data-bwpn-dmg]').forEach(inp=>{inp.addEventListener('change',()=>{const i=parseInt(inp.dataset.bwpnDmg);if(coc.weapons[i])coc.weapons[i].damage=inp.value;});});
+    lower.querySelectorAll('[data-bwpn-pen]').forEach(cb=>{cb.addEventListener('change',()=>{const i=parseInt(cb.dataset.bwpnPen);if(coc.weapons[i])coc.weapons[i].pen=cb.checked;});});
+    lower.querySelector('#kpBldAddWpn')?.addEventListener('click',()=>{
+      if(!coc.weapons)coc.weapons=[];
+      coc.weapons.push({id:uid(),name:'',skill:0,damage:'1D6',pen:false});
+      this._renderBuilderPane();
+    });
+    // Avatar upload
+    const avWrap=lower.querySelector('#kpBldAvWrap');
+    const avFile=lower.querySelector('#kpBldAvFile');
+    if(avWrap)avWrap.addEventListener('click',()=>avFile?.click());
+    if(avFile)avFile.addEventListener('change',()=>{
+      const f=avFile.files[0];if(!f)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{c.avatar=ev.target.result;c._avatarCompressed=ev.target.result;this._renderBuilderPane();};
+      reader.readAsDataURL(f);
+    });
+    // Save / clear / import
+    lower.querySelector('#kpBuilderSave')?.addEventListener('click',()=>this._saveBuilderAsNpc());
+    lower.querySelector('#kpBuilderClear')?.addEventListener('click',()=>{
+      if(!confirm('确认清空当前构建表单？'))return;
+      this._builderChar=this._newBuilderChar();this._renderBuilderPane();
+    });
+    lower.querySelector('#kpBuilderImport')?.addEventListener('click',()=>{
+      const txt=prompt('粘贴角色卡文本：');if(!txt)return;
+      const p=parseChar(txt,'COC');
+      const cc=this._builderChar.coc;
+      ['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'].forEach(k=>{if(p[k]!=null)cc[k]=p[k];});
+      if(p._skills?.length)cc.skills=p._skills;
+      if(p.name)this._builderChar.name=p.name;
+      if(p.occupation)this._builderChar.occupation=p.occupation;
+      const dv2=cocDerived(cc);cc.HP={cur:dv2.hpMax,max:dv2.hpMax};cc.MP={cur:dv2.mpMax,max:dv2.mpMax};cc.SAN={cur:cc.POW||50,max:dv2.sanMax};
+      this._renderBuilderPane();
+    });
+  },
+
+  _saveBuilderAsNpc(){
+    const c=this._builderChar;if(!c)return;
+    const coc=c.coc;const dv=cocDerived(coc);
+    coc.HP={cur:dv.hpMax,max:dv.hpMax};coc.MP={cur:dv.mpMax,max:dv.mpMax};coc.SAN={cur:coc.POW||50,max:dv.sanMax};
+    const npc=JSON.parse(JSON.stringify(c));
+    npc.id=uid();npc._isNpc=true;
+    const npcs=this.getNpcs();npcs.push(npc);this.saveNpcs(npcs);
+    const savedName=c.name||'NPC';
+    this._builderChar=this._newBuilderChar();
+    this._renderBuilderPane();
+    this.renderConsole();
+    // Toast
+    let toast=document.getElementById('kpToast');
+    if(!toast){toast=document.createElement('div');toast.id='kpToast';toast.className='kp-toast';document.body.appendChild(toast);}
+    toast.textContent=`已保存：${savedName}`;
+    toast.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer=setTimeout(()=>toast.classList.remove('show'),3000);
+  },
+
+  showDetail(type,id){
+    if(!type||!id)return;
+    const panel=document.getElementById('kpBuilderPanel');
+    if(panel&&panel.classList.contains('collapsed')&&window.innerWidth>=1100){
+      panel.classList.remove('collapsed');
+      const tog=document.getElementById('kpBuilderToggle');tog.textContent='‹';tog.title='收起详情栏';
+      localStorage.setItem('kp_middle_panel_collapsed','false');
+    }
+    this._detailType=type;this._detailId=id;
+    this._renderDetailPane();
+  },
+
+  _renderDetailLower(){this._renderDetailPane();},
 
   _showDetailModal(type,id){
     const char=this._getCardChar(type,id);if(!char)return;
@@ -5040,35 +5534,151 @@ const KP={
     },80);
   },
 
+  _kickPlayer(playerName,charName){
+    this._showKickConfirmModal(playerName,charName,async()=>{
+      if(!this.db||!this.roomId)return;
+      try{
+        await this.db.ref(`rooms/${this.roomId}/kicks/${playerName}`).set({kickedAt:Date.now(),kickedBy:this.playerName,reason:'kicked'});
+        await this.db.ref(`rooms/${this.roomId}/playerStatus/${playerName}`).remove().catch(()=>{});
+        const chSnap=await this.db.ref(`rooms/${this.roomId}/channels`).once('value');
+        const chData=chSnap.val()||{};
+        for(const ch of Object.keys(chData)){
+          await this.db.ref(`rooms/${this.roomId}/channels/${ch}/players/${playerName}`).remove().catch(()=>{});
+        }
+        await this.db.ref(`rooms/${this.roomId}/players/${playerName}`).remove().catch(()=>{});
+        FB._toast(`已踢出「${charName}」`,'success');
+        this.renderConsole();
+      }catch(e){console.error('kickPlayer:',e);FB._toast('踢出失败: '+e.message,'error');}
+    });
+  },
+
+  _showKickConfirmModal(playerName,charName,onConfirm){
+    const modal=document.createElement('div');modal.className='kp-modal-overlay';
+    modal.innerHTML=`<div class="kp-modal" style="max-width:380px">
+      <div class="kp-modal-title">⊘ 踢出玩家</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.8;margin-bottom:16px">
+        确认将「${esc(charName)}」(@${esc(playerName)})<br>踢出当前房间？<br>
+        <span style="font-size:12px;color:var(--dim)">该玩家将无法继续参与本场。</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="kpKickCancel" style="flex:1">取消</button>
+        <button class="btn danger" id="kpKickConfirm" style="flex:1;background:#dc2626;border-color:#dc2626;color:#fff">确认踢出</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('kpKickCancel')?.addEventListener('click',()=>modal.remove());
+    modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+    document.getElementById('kpKickConfirm')?.addEventListener('click',()=>{modal.remove();onConfirm();});
+  },
+
+  _showKickedListModal(){
+    if(!this.db||!this.roomId)return;
+    this.db.ref(`rooms/${this.roomId}/kicks`).once('value').then(snap=>{
+      const kicks=snap.val()||{};
+      const modal=document.createElement('div');modal.className='kp-modal-overlay';
+      const rows=Object.entries(kicks).map(([pid,data])=>{
+        const t=data.kickedAt?new Date(data.kickedAt).toLocaleTimeString():'';
+        return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="flex:1;font-size:12px;color:var(--text)">${esc(pid)}</span>
+          <span style="font-size:11px;color:var(--dim)">${t}</span>
+          <button class="btn" data-unkick="${esc(pid)}" style="font-size:11px;padding:2px 10px;border-color:rgba(39,174,96,.5);color:#27ae60">解除</button>
+        </div>`;
+      }).join('');
+      modal.innerHTML=`<div class="kp-modal" style="max-width:420px">
+        <div class="kp-modal-title">⊘ 已踢出名单</div>
+        <div style="max-height:260px;overflow-y:auto">${rows||'<div style="font-size:12px;color:var(--dim);padding:12px 0">暂无已踢出玩家</div>'}</div>
+        <div class="kp-modal-sep"></div>
+        <button class="btn" id="kpKickedListClose" style="width:100%">关闭</button>
+      </div>`;
+      document.body.appendChild(modal);
+      document.getElementById('kpKickedListClose')?.addEventListener('click',()=>modal.remove());
+      modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+      modal.querySelectorAll('[data-unkick]').forEach(btn=>{
+        btn.addEventListener('click',async()=>{
+          const pid=btn.dataset.unkick;
+          try{
+            await this.db.ref(`rooms/${this.roomId}/kicks/${pid}`).remove();
+            FB._toast(`已解除「${pid}」的踢出`,'success');
+            modal.remove();this._showKickedListModal();
+          }catch(e){FB._toast('操作失败','error');}
+        });
+      });
+    }).catch(()=>{FB._toast('读取失败','error');});
+  },
+
   _showNpcModal(editId){
     const existing=editId?this.getNpcs().find(n=>n.id===editId):null;
+    const localChars=S.getChars().filter(c=>c.mode==='COC');
+    const charListHtml=localChars.length
+      ?localChars.map(c=>{
+          const av=c._avatarCompressed||c.avatar||'';
+          const avEl=av?`<img src="${av}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0">`:`<div style="width:28px;height:28px;border-radius:50%;background:${nameHashColor(c.name)};display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0">${(c.name[0]||'?').toUpperCase()}</div>`;
+          const occ=c.occupation?` · ${esc(c.occupation)}`:'';
+          return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            ${avEl}<div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.name)}${occ}</div></div>
+            <button class="btn primary" data-char-pick="${esc(c.id)}" style="font-size:11px;padding:3px 10px;flex-shrink:0">选择</button>
+          </div>`;
+        }).join('')
+      :'<div style="font-size:12px;color:var(--dim);padding:10px 0">暂无 COC 角色卡</div>';
     const modal=document.createElement('div');modal.className='kp-modal-overlay';
     modal.innerHTML=`<div class="kp-modal">
       <div class="kp-modal-title">${existing?'编辑':'导入'} NPC</div>
-      ${!existing?`<div class="kp-modal-tabs"><button class="kp-modal-tab active" data-mtab="text">粘贴文本</button><button class="kp-modal-tab" data-mtab="blank">空白新建</button></div>`:''}
+      ${!existing?`<div class="kp-modal-tabs"><button class="kp-modal-tab active" data-mtab="chars">从角色卡</button><button class="kp-modal-tab" data-mtab="text">粘贴文本</button><button class="kp-modal-tab" data-mtab="blank">空白新建</button></div>`:''}
       <input id="kpNpcName" class="fb-join-input" placeholder="NPC名称" maxlength="20" value="${esc(existing?.name||'')}" style="margin-bottom:8px">
-      ${!existing?`<div id="kpModalExtra"><textarea id="kpNpcText" placeholder="粘贴角色卡文本，自动解析属性和技能…" style="width:100%;min-height:90px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.07);border-radius:6px;padding:8px;color:var(--text);font-family:inherit;font-size:12px;resize:vertical;box-sizing:border-box"></textarea></div>`:''}
+      ${!existing?`<div id="kpModalExtra"><div id="kpModalCharList" style="max-height:220px;overflow-y:auto">${charListHtml}</div><textarea id="kpNpcText" placeholder="粘贴角色卡文本，自动解析属性和技能…" style="display:none;width:100%;min-height:90px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.07);border-radius:6px;padding:8px;color:var(--text);font-family:inherit;font-size:12px;resize:vertical;box-sizing:border-box"></textarea></div>`:''}
       <div class="kp-modal-sep"></div>
       <div style="display:flex;gap:8px"><button class="btn primary" id="kpModalOk" style="flex:1">确认</button><button class="btn" id="kpModalCancel" style="padding:5px 16px">取消</button></div>
     </div>`;
     document.body.appendChild(modal);
-    let mode='text';
-    modal.querySelectorAll('[data-mtab]').forEach(t=>{
-      t.addEventListener('click',()=>{modal.querySelectorAll('[data-mtab]').forEach(x=>x.classList.remove('active'));t.classList.add('active');mode=t.dataset.mtab;const ex=document.getElementById('kpModalExtra');if(ex)ex.style.display=mode==='blank'?'none':'';});
+    let mode='chars';
+    let pickedChar=null;
+    const _switchTab=(m)=>{
+      mode=m;
+      modal.querySelectorAll('[data-mtab]').forEach(x=>x.classList.toggle('active',x.dataset.mtab===m));
+      const charList=document.getElementById('kpModalCharList');
+      const textArea=document.getElementById('kpNpcText');
+      if(charList)charList.style.display=(m==='chars')?'':'none';
+      if(textArea)textArea.style.display=(m==='text')?'':'none';
+    };
+    modal.querySelectorAll('[data-mtab]').forEach(t=>{t.addEventListener('click',()=>_switchTab(t.dataset.mtab));});
+    // "选择" buttons in character list
+    modal.querySelectorAll('[data-char-pick]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const cid=btn.dataset.charPick;
+        const src=localChars.find(c=>c.id===cid);if(!src)return;
+        pickedChar=src;
+        const npcName=src.name+'（NPC）';
+        const nameInp=document.getElementById('kpNpcName');
+        if(nameInp)nameInp.value=npcName;
+        // Highlight selected row
+        modal.querySelectorAll('[data-char-pick]').forEach(b=>b.style.background='');
+        btn.style.background='var(--gold)';btn.style.color='#000';
+      });
     });
     document.getElementById('kpModalCancel')?.addEventListener('click',()=>modal.remove());
     modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
     document.getElementById('kpModalOk')?.addEventListener('click',()=>{
       const nm=(document.getElementById('kpNpcName')?.value||'').trim()||'NPC';
+      const allNpcs=this.getNpcs();
+      const otherNpcs=existing?allNpcs.filter(n=>n.id!==existing.id):allNpcs;
+      const playerNames=Object.values(this._playerCards||{}).map(p=>p.characterName).filter(Boolean);
+      if(otherNpcs.some(n=>n.name===nm)||playerNames.includes(nm)){FB._toast(`已存在名为「${nm}」的角色，请使用其他名称`,'error');return;}
       if(existing){existing.name=nm;const npcs=this.getNpcs();const idx=npcs.findIndex(n=>n.id===existing.id);if(idx>=0){npcs[idx]=existing;this.saveNpcs(npcs);}modal.remove();this.renderConsole();return;}
-      let npc=newChar(nm,'COC');npc._isNpc=true;
-      if(mode==='text'){
-        const txt=document.getElementById('kpNpcText')?.value||'';
-        const p=parseChar(txt,'COC');
-        ['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'].forEach(k=>{if(p[k]!=null)npc.coc[k]=p[k];});
-        const dv=cocDerived(npc.coc);
-        npc.coc.HP={cur:dv.hpMax,max:dv.hpMax};npc.coc.MP={cur:dv.mpMax,max:dv.mpMax};npc.coc.SAN={cur:npc.coc.POW||50,max:dv.sanMax};
-        if(p._skills?.length)npc.coc.skills=p._skills;npc.name=nm;
+      let npc;
+      if(mode==='chars'&&pickedChar){
+        // Deep-copy from character card
+        npc=JSON.parse(JSON.stringify(pickedChar));
+        npc.id=uid();npc.name=nm;npc._isNpc=true;
+      }else{
+        npc=newChar(nm,'COC');npc._isNpc=true;
+        if(mode==='text'){
+          const txt=document.getElementById('kpNpcText')?.value||'';
+          const p=parseChar(txt,'COC');
+          ['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'].forEach(k=>{if(p[k]!=null)npc.coc[k]=p[k];});
+          const dv=cocDerived(npc.coc);
+          npc.coc.HP={cur:dv.hpMax,max:dv.hpMax};npc.coc.MP={cur:dv.mpMax,max:dv.mpMax};npc.coc.SAN={cur:npc.coc.POW||50,max:dv.sanMax};
+          if(p._skills?.length)npc.coc.skills=p._skills;npc.name=nm;
+        }
       }
       const npcs=this.getNpcs();npcs.push(npc);this.saveNpcs(npcs);
       modal.remove();this.renderConsole();
@@ -5114,6 +5724,44 @@ function _showKPTools(show){
   if(!show&&_isSecretRoll)_toggleSecretRoll(); // reset on leave
 }
 
+// Apply KP-set conditions to the local player's UI (non-KP only)
+function _applyConditionEffects(conds){
+  const char=App.char;if(!char||char.mode!=='COC')return;
+  // Map new 6-key conditions → old DOM data-cond keys
+  const domMap={
+    severelyInjured:'majorWound',
+    unconscious:'unconscious',
+    tempInsane:'temporary',
+    indefiniteInsane:'indefinite',
+    permanentInsane:'permInsanity',
+    injured:'injured',
+  };
+  Object.entries(domMap).forEach(([newKey,oldKey])=>{
+    const active=!!conds[newKey];
+    const el=document.querySelector(`.cond-tag[data-cond="${oldKey}"]`);
+    if(el)el.classList.toggle('active',active);
+  });
+  // Apply visual bar effects
+  const hpBar=document.getElementById('cpHpBar');
+  if(hpBar)hpBar.classList.toggle('bar-unconscious',!!conds.unconscious);
+  const sanBar=document.getElementById('cpSanBar');
+  if(sanBar)sanBar.classList.toggle('bar-insane',!!(conds.tempInsane||conds.indefiniteInsane));
+  // Permanent insanity: pulsing border
+  document.body.classList.toggle('perm-insane',!!conds.permanentInsane);
+  // Permanent insanity overlay
+  const ov=document.getElementById('overlay-mad');
+  if(ov){if(conds.permanentInsane)ov.classList.add('show');else if(!char.coc?.conditions?.permInsanity)ov.classList.remove('show');}
+  // Save to local char for persistence
+  if(!char.coc.conditions)char.coc.conditions={};
+  if(!char.coc.madness)char.coc.madness={};
+  char.coc.conditions.majorWound=!!conds.severelyInjured;
+  char.coc.conditions.unconscious=!!conds.unconscious;
+  char.coc.conditions.permInsanity=!!conds.permanentInsane;
+  char.coc.madness.temporary=!!conds.tempInsane;
+  char.coc.madness.indefinite=!!conds.indefiniteInsane;
+  App.save();
+}
+
 // Hook S.pushHist: broadcast local rolls to Firebase (skip if fromFB to avoid echo)
 const _fbOrigPushHist=S.pushHist.bind(S);
 S.pushHist=function(e){
@@ -5123,6 +5771,10 @@ S.pushHist=function(e){
   if(!e.fromFB&&FB.isKP&&FB.roomId&&KP._judgeCharType==='npc'){
     e={...e,isNpc:true};
   }
+  // Tag all locally-originated rolls with operatedBy so dual-column history works
+  if(!e.fromFB&&FB.roomId&&!e.operatedBy){
+    e={...e,operatedBy:FB.isKP?'kp':'player',operatorId:FB.playerName||''};
+  }
   _fbOrigPushHist(e);
   if(!e.fromFB)FB.pushRoll(e);
 };
@@ -5131,6 +5783,53 @@ S.pushHist=function(e){
 const _fbPrevAdjBar=App.adjustBar.bind(App);
 App.adjustBar=function(...args){_fbPrevAdjBar(...args);FB.syncPlayer();};
 
+// ── Kicked player overlay ─────────────────────────────────────────────────────
+function _showKickedOverlay(){
+  clearTimeout(_bgTimer);_bgTimer=null;
+  if(document.getElementById('kpKickedOverlay'))return;
+  const ov=document.createElement('div');
+  ov.id='kpKickedOverlay';ov.className='kp-kicked-overlay';
+  ov.innerHTML=`<div class="kp-kicked-card">
+    <div class="kp-kicked-title">你已被 KP 移出房间</div>
+    <div class="kp-kicked-body">本次游戏记录已保存到本地</div>
+    <button class="kp-kicked-btn" id="kpKickedBack">返回离线模式</button>
+  </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('kpKickedBack')?.addEventListener('click',()=>{ov.remove();FB.leaveRoom();});
+}
+// ── Player join: check character name uniqueness before first sync ───────────
+function _showNameConflictModal(conflictName){
+  return new Promise(resolve=>{
+    const modal=document.createElement('div');modal.className='kp-modal-overlay';
+    modal.innerHTML=`<div class="kp-modal" style="max-width:380px">
+      <div class="kp-modal-title" style="font-size:14px">角色名冲突</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">角色名「${esc(conflictName)}」已被其他玩家使用，请修改后再加入。</div>
+      <input id="joinNameInput" class="fb-join-input" placeholder="请输入角色名" maxlength="20" value="${esc(conflictName)}" style="margin-bottom:10px">
+      <div style="display:flex;gap:8px"><button class="btn primary" id="joinNameOk" style="flex:1">确认加入</button></div>
+    </div>`;
+    document.body.appendChild(modal);
+    const inp=document.getElementById('joinNameInput');
+    inp?.focus();inp?.select();
+    const ok=()=>{
+      const v=(document.getElementById('joinNameInput')?.value||'').trim();
+      if(!v){FB._toast('角色名不能为空','error');return;}
+      modal.remove();resolve(v);
+    };
+    document.getElementById('joinNameOk')?.addEventListener('click',ok);
+    inp?.addEventListener('keydown',e=>{if(e.key==='Enter')ok();});
+  });
+}
+async function _checkJoinNameConflict(){
+  if(!FB.db||!FB.roomId)return;
+  const char=App.char;if(!char||char.mode!=='COC')return;
+  const snap=await FB.db.ref(`rooms/${FB.roomId}/playerCards`).once('value');
+  const cards=snap.val()||{};
+  const myName=char.name||'探索者';
+  const conflict=Object.values(cards).some(c=>c.characterName===myName&&c.playerId!==FB.playerName);
+  if(!conflict)return;
+  const newName=await _showNameConflictModal(myName);
+  char.name=newName;App.save?.();
+}
 // ── Player card auto-sync to Firebase playerCards node ──────────────────────
 function _buildPlayerCard(char){
   if(!char||char.mode!=='COC')return null;
@@ -5180,11 +5879,27 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>{if(!FB.roomId)FB.rejoinRoom();},600);
 });
 
-// Fix 3: Page Visibility API — pause heartbeat when hidden, reconnect when visible
+// Background auto-leave: 20-minute timer while page is hidden
+let _bgTimer=null;
+function autoLeaveRoom(){
+  if(!FB.roomId)return;
+  FB.leaveRoom();
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9998;display:flex;align-items:center;justify-content:center';
+  ov.innerHTML=`<div style="background:var(--surface);border-radius:10px;padding:28px 32px;text-align:center;max-width:340px;border:1px solid var(--border);box-shadow:0 6px 32px rgba(0,0,0,.6)">
+    <div style="font-size:14px;color:var(--text);line-height:1.8;margin-bottom:16px">因长时间切换后台已自动离开<br>房间，角色卡数据已保留。</div>
+    <button id="autoleaveDismiss" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 28px;border-radius:6px;cursor:pointer;font-size:13px;font-family:var(--font-body)">确定</button>
+  </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('autoleaveDismiss')?.addEventListener('click',()=>ov.remove());
+}
+// Page Visibility API — pause heartbeat when hidden, reconnect when visible; auto-leave after 20 min in background
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden'){
     FB._stopHeartbeat();
+    if(FB.roomId)_bgTimer=setTimeout(autoLeaveRoom,20*60*1000);
   }else{
+    clearTimeout(_bgTimer);_bgTimer=null;
     FB._startHeartbeat();
     if(FB.roomId&&FB._playerRef){
       FB._playerRef.update({online:true,lastSeen:Date.now()}).catch(()=>{});
