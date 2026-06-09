@@ -1772,107 +1772,102 @@ input::placeholder,textarea::placeholder{color:var(--text-disabled)}
    ============================================================ */
 
 /* ============================================================
-   STRUCTURAL FIX — stable page skeleton, no layout jumps
-   Only structural rules here; visual styles unchanged.
+   STRUCTURAL FIX — scrollable layout, no content clipping
+   Core principle: middle column scrolls; results never clip.
    ============================================================ */
 
-/* game-left: fill grid-cell height, NO outer scroll */
+/* game-left: flex column, page-scrollable — content never clipped */
 #tab-dice .game-left{
   display:flex!important;flex-direction:column!important;
-  gap:12px!important;padding:12px 14px!important;
-  overflow:hidden!important;   /* ← key: content can't push this taller */
+  gap:12px!important;padding:12px 14px 28px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
 }
 
-/* Status bar: fixed, never shrinks */
-#diceStatusBar{flex-shrink:0;height:32px}
+/* Status bar */
+#diceStatusBar{flex-shrink:0}
 
-/* ── TOP ROW: FIXED HEIGHT — the stability anchor ── */
+/* ── TOP ROW: content-driven height, min-height for usability ── */
 .arena-top-row{
   display:flex;gap:16px;
-  flex-shrink:0;          /* never shrink when combat area grows */
-  height:290px;           /* fixed: content changes inside won't resize this */
-  align-items:stretch;    /* cards must fill the height */
-  overflow:hidden;
+  flex-shrink:0;
+  min-height:260px;
+  align-items:stretch;
 }
 
-/* Each top card: fills the fixed row height, clips overflow */
+/* Each top card: natural height, flex column for internal layout */
 .arena-top-row>.arena-card{
   flex:1;min-width:0;
-  height:100%;
-  min-height:unset!important;
-  overflow:hidden;
   display:flex;flex-direction:column;
 }
-/* Override individual min-heights that were causing instability */
 #skillCheckArena{min-height:unset!important}
 .arena-top-row .arena-hdr{flex-shrink:0}
 
-/* ── Skill check body: flex column fills card, zones stay put ── */
+/* ── Skill check body: flex column, no overflow clipping ── */
 .sk-arena-body{
   flex:1!important;min-height:0!important;
-  overflow:hidden!important;
   display:flex!important;flex-direction:column!important;gap:0!important;
 }
 .sk-ctrl-zone{flex-shrink:0}
 .arena-btn-row{flex-shrink:0;margin-bottom:8px}
 .sk-result-zone{
   flex-shrink:0;
-  min-height:52px;max-height:72px;   /* fixed space: result never grows beyond this */
-  overflow:hidden;margin-bottom:6px;
+  min-height:52px;
+  margin-bottom:6px;
 }
-.sk-hist-zone{
-  flex:1;min-height:0;overflow-y:auto; /* history scrolls inside, never pushes out */
-  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;
-}
+.sk-hist-zone{flex-shrink:0;overflow:hidden}
 
-/* ── Dice card body: flex column fills card ── */
+/* ── Dice card body: flex column ── */
 .arena-dice-card .arena-body{
   display:flex!important;flex-direction:column!important;
-  flex:1;min-height:0;overflow:hidden;
+  flex:1;min-height:0;
 }
 .arena-dice-card .dice-grid{flex-shrink:0}
 .arena-dice-card .arena-dice-row{flex-shrink:0;margin:8px 0}
-#diceResults{
-  flex:1;min-height:unset!important;max-height:unset!important;
-  overflow-y:auto;
-}
+#diceResults{flex-shrink:0;overflow:visible}
 
-/* ── COMBAT ARENA: takes ALL remaining vertical space ── */
+/* ── COMBAT ARENA: natural block — page scrolls to show full content ── */
 #combatArena{
-  flex:1!important;min-height:0!important;overflow:hidden!important;
-  /* Override <details> default block → flex column for height fill */
   display:flex!important;flex-direction:column!important;
+  flex-shrink:0;  /* never compress — overflow-y:auto on game-left handles scroll */
 }
-/* When JS hides it (.hidden = display:none), this ID+class selector wins */
 #combatArena.hidden{display:none!important}
-
-/* Combat summary: fixed height */
 #combatArena>summary.arena-hdr{flex-shrink:0}
 
-/* Combat content: fills remaining height, scrolls internally */
-#caContent{
-  flex:1;min-height:0;overflow-y:auto;
-  padding:12px 14px!important;
-  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;
-}
-#caContent>.ca-layout{min-height:100%}
+/* Combat content: natural height, no internal scroll */
+#caContent{padding:12px 14px!important}
 
-/* ca-left: remove old max-height cap; scroll via caContent */
+/* ca-left: no max-height cap */
 .ca-left{max-height:unset!important;overflow-y:visible!important}
 
-/* ── Responsive: restore auto layout on small screens ── */
+/* ── Width responsive ── */
 @media(max-width:900px){
-  .arena-top-row{height:auto;flex-shrink:1;align-items:flex-start}
-  .arena-top-row>.arena-card{height:auto;min-height:240px!important}
-  #combatArena{flex:none!important}
-  #tab-dice .game-left{overflow-y:auto!important}
+  .arena-top-row{flex-direction:column;min-height:auto}
+  .arena-top-row>.arena-card{min-height:240px}
+}
+
+/* ── Height responsive: compress spacing on shorter screens ── */
+@media(max-height:780px){
+  #tab-dice .game-left{gap:10px!important}
+  .arena-top-row{gap:12px;min-height:240px}
+  .arena-body{padding:10px 14px}
+  .arena-hdr{padding:9px 14px}
+}
+@media(max-height:650px){
+  .arena-top-row{min-height:210px}
+  .arena-body{padding:8px 12px}
 }
 
 /* ── Original top-row gap rule (preserved) ── */
 .arena-top-row>.arena-card{flex:1;min-width:0}
 
 /* ── Compact dice in top-row right column ── */
-.arena-dice-card .dice-grid{gap:8px!important;justify-content:flex-start!important}
+/* Dice grid: max 2 rows — prevents height explosion on narrow widths */
+.arena-dice-card .dice-grid{
+  gap:8px!important;justify-content:flex-start!important;
+  max-height:148px!important;  /* 2 rows × 67px + 8px gap + 2px pad = 144px */
+  overflow-y:hidden!important;
+}
 .arena-dice-card .die-slot{gap:3px}
 .arena-dice-card .die-shape{width:44px!important;height:44px!important}
 /* Per-die inner scale to fit 44px container */
@@ -2041,15 +2036,8 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
    PHASE 1 — Structure & Scroll Boundaries
    ============================================================ */
 
-/* Combat left panel: internal scroll so results don't push page */
-.ca-left {
-  max-height: 440px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.1) transparent;
-}
-.ca-left::-webkit-scrollbar { width: 3px; }
-.ca-left::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+/* Combat left panel: natural height — page scrolls to show full content */
+.ca-left { overflow-y: visible; }
 
 /* Compact combat result cards (Issue 8) */
 .ca-result-card { padding:7px 12px!important; margin-bottom:5px!important; }
@@ -2156,9 +2144,7 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
    Rule: current results NEVER clipped; history CAN scroll
    ============================================================ */
 
-/* 1. Top row height: 360px to give dice results enough room
-      Math: hdr(40) + body-pad(28) + dice-grid(~72) + roll-row(48) + results(~150) = 338 < 360 ✓ */
-.arena-top-row { height: 360px !important; }
+/* 1. Top row: content-driven height (scrollable layout, no fixed height) */
 
 /* 2. Result zone: NEVER clip, NEVER scroll — content replaces placeholder */
 .sk-result-zone {
@@ -2166,13 +2152,11 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
   overflow: visible !important;
 }
 
-/* 3. History zone: exactly 2 records, NO scroll, fixed height
-      2 rows × 28px + label ~20px = 76px max; use overflow:hidden (no scrollbar) */
+/* 3. History zone: height capped by JS-calculated --sk-hist-max-h; never drives card height */
 .sk-hist-zone {
-  max-height: 76px !important;
-  overflow: hidden !important;   /* NO scroll on history — just show 2 records */
-  flex-shrink: 0 !important;    /* don't let it shrink and accidentally appear to scroll */
-  flex: none !important;
+  flex-shrink: 0 !important;
+  max-height: var(--sk-hist-max-h, 88px) !important;
+  overflow: hidden !important;
 }
 
 /* 4. Dice result: full display, no scrollbar */
@@ -7918,34 +7902,81 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('DOMContentLoaded', () => setTimeout(_updateSkCurInfo, 500));
 
-/* Save recent judge record to localStorage and re-render the list */
-function _pushAndRenderRecent(entry) {
-  const KEY = 'recentJudgeRecords';
-  let recs = [];
-  try { recs = JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){}
-  recs.unshift(entry);
-  if (recs.length > 2) recs.length = 2;  // max 2 records
-  try { localStorage.setItem(KEY, JSON.stringify(recs)); } catch(e){}
-  _renderRecentJudge(recs);
+/* ── Skill history adaptive display ────────────────────────────────────
+   hist-zone height is set via --sk-hist-max-h CSS var.
+   JS measures the DICE card height, derives available space in the skill
+   card, and updates the var + rendered record count on every relevant event.
+   This prevents hist-zone content from ever driving the skill card height. */
+const _SK_HIST_KEY = 'recentJudgeRecords';
+let _histRafPending = false;
+
+function _calcHistParams() {
+  const diceCard  = document.querySelector('.arena-dice-card');
+  const skillCard = document.getElementById('skillCheckArena');
+  if (!diceCard || !skillCard) return { maxH: 88, count: 2 };
+  const diceH = diceCard.offsetHeight;
+  if (!diceH) return { maxH: 88, count: 2 };
+  const hdrH  = (skillCard.querySelector('.arena-hdr') || {}).offsetHeight || 42;
+  const body  = skillCard.querySelector('.sk-arena-body') || skillCard.querySelector('.arena-body');
+  const padV  = 28;   // arena-body padding: 14px × 2 (responsive rules ignored — small error OK)
+  const ctrlH = body ? (body.querySelector('.sk-ctrl-zone')  || {}).offsetHeight || 44 : 44;
+  const btnH  = body ? (body.querySelector('.arena-btn-row') || {}).offsetHeight || 52 : 52;
+  const resH  = body ? (body.querySelector('.sk-result-zone')|| {}).offsetHeight || 70 : 70;
+  const available = Math.max(0, diceH - hdrH - padV - ctrlH - btnH - resH);
+  // 88px = 2 records, 168px = 5 records  (label region ≈ 27px, each row = 28px)
+  const maxH  = Math.min(168, Math.max(88, available));
+  const count = Math.min(5, Math.max(2, Math.floor((maxH - 27) / 28)));
+  return { maxH, count };
 }
+
+function _refreshHistZone() {
+  if (_histRafPending) return;
+  _histRafPending = true;
+  requestAnimationFrame(() => {
+    _histRafPending = false;
+    const { maxH, count } = _calcHistParams();
+    document.documentElement.style.setProperty('--sk-hist-max-h', maxH + 'px');
+    let recs = [];
+    try { recs = JSON.parse(localStorage.getItem(_SK_HIST_KEY)) || []; } catch(e) {}
+    _renderRecentJudge(recs.slice(0, count));
+  });
+}
+
+function _pushAndRenderRecent(entry) {
+  let recs = [];
+  try { recs = JSON.parse(localStorage.getItem(_SK_HIST_KEY)) || []; } catch(e) {}
+  recs.unshift(entry);
+  if (recs.length > 8) recs.length = 8;
+  try { localStorage.setItem(_SK_HIST_KEY, JSON.stringify(recs)); } catch(e) {}
+  _refreshHistZone();
+}
+
 function _renderRecentJudge(recs) {
-  const el = document.getElementById('skill-recent-records'); if (!el) return;
-  const show = (recs || []).slice(0, 2);  // always at most 2
+  const el = document.getElementById('skill-recent-records');
+  if (!el) return;
+  const show = recs || [];
   if (!show.length) { el.innerHTML = '<div class="sk-hist-empty">暂无记录</div>'; return; }
   el.innerHTML = show.map(r =>
     `<div class="sk-rec-row">
       <span class="sk-rec-name">${r.name}</span>
       <span class="sk-rec-grade ${r.cls}">${r.grade}</span>
-      <span class="sk-rec-val">${r.roll}${r.target?' / '+r.target:''}</span>
+      <span class="sk-rec-val">${r.roll}${r.target ? ' / ' + r.target : ''}</span>
     </div>`
   ).join('');
 }
-// Init: restore persisted records on page load (max 2)
+
+// Init: restore from localStorage, then set up adaptive sizing
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    const saved = (JSON.parse(localStorage.getItem('recentJudgeRecords')) || []).slice(0, 2);
-    if (saved.length) _renderRecentJudge(saved);
-  } catch(e){}
+    const saved = (JSON.parse(localStorage.getItem(_SK_HIST_KEY)) || []).slice(0, 2);
+    if (saved.length) _renderRecentJudge(saved);  // default 2 until layout measured
+  } catch(e) {}
+  setTimeout(_refreshHistZone, 200);  // measure after initial layout
+  // Watch dice card: re-calc whenever its height changes (dice results added/cleared)
+  const diceCard = document.querySelector('.arena-dice-card');
+  if (diceCard && window.ResizeObserver) {
+    new ResizeObserver(_refreshHistZone).observe(diceCard);
+  }
 });
 
 /* Status bar updater + skill history — reads App/FB globals */
