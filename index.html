@@ -1453,6 +1453,20 @@ body.fb-nonkp-room .cond-tag:hover{border-color:var(--border-bright)!important;c
 .kp-card-judge-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.1)}
 .kp-card-detail-btn{flex:1;font-size:11px;height:32px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;transition:all .15s;font-family:var(--font-body);padding:0;white-space:nowrap}
 .kp-card-detail-btn:hover{border-color:var(--border-bright);color:var(--text-muted)}
+/* Presence three-state dots */
+.kp-presence-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:2px}
+.kp-presence-dot.online{background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.65)}
+.kp-presence-dot.away{background:#eab308;box-shadow:0 0 5px rgba(234,179,8,.55)}
+.kp-presence-dot.offline{background:#6b7280}
+/* Status badge */
+.kp-status-badge{font-size:9px;padding:1px 5px;border-radius:3px;flex-shrink:0;letter-spacing:.2px;font-weight:700}
+.kp-status-badge.away{background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.22)}
+.kp-status-badge.offline{background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.18)}
+/* Offline card dim */
+.kp-card.player-offline{opacity:.6;transition:opacity .3s}
+/* Remove from battle button */
+.kp-card-remove-btn{font-size:10px;height:32px;padding:0 8px;border:1px solid rgba(156,163,175,.25);border-radius:4px;background:transparent;color:#9ca3af;cursor:pointer;transition:all .15s;font-family:var(--font-body);flex-shrink:0;white-space:nowrap}
+.kp-card-remove-btn:hover{border-color:rgba(239,68,68,.45);color:#f87171}
 /* "当前判定" indicator near skill check title */
 .kp-judge-indicator{display:none;align-items:center;gap:5px;padding:2px 8px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.28);border-radius:4px;font-size:11px;color:var(--gold);cursor:pointer;position:relative;flex-shrink:0;white-space:nowrap;margin-left:auto}
 .kp-judge-indicator.visible{display:flex}
@@ -6478,7 +6492,6 @@ const FB={
     this._hbRef=this.db.ref(`rooms/${this.roomId}/heartbeats/${this.playerName}`);
     this._hbRef.onDisconnect().remove();
     await this._hbRef.set({lastSeen:Date.now(),characterName:charSnap?.name||this.playerName});
-    this.db.ref(`rooms/${this.roomId}/playerCards/${this.playerName}`).onDisconnect().remove();
   },
 
   // ── Extracted KP listener builder — called by joinRoom and _reconnectRestore ──
@@ -6488,10 +6501,12 @@ const FB={
       const now=Date.now();
       const initHbSnap=await this.db.ref(`rooms/${this.roomId}/heartbeats`).once('value');
       KP._onlineIds=new Set([this.playerName]);
+      KP._heartbeats={};
       if(initHbSnap.exists()){
         initHbSnap.forEach(s=>{
           const d=s.val();
-          if(d&&d.lastSeen&&(now-d.lastSeen)<300000)KP._onlineIds.add(s.key);
+          if(d)KP._heartbeats[s.key]=d;
+          if(d&&d.lastSeen&&(now-d.lastSeen)<30000)KP._onlineIds.add(s.key);
         });
       }
     }catch(e){console.warn('初始在线列表加载失败:',e);KP._onlineIds=new Set([this.playerName]);}
@@ -6501,27 +6516,30 @@ const FB={
     const hbAddedFn=hbListenRef.on('child_added',snap=>{
       if(snap.key===this.playerName)return;
       const d=snap.val();
-      if(d&&d.lastSeen&&(Date.now()-d.lastSeen)<300000){
-        KP._onlineIds.add(snap.key);
-        if(App.curTab==='dice')KP.renderConsole();
-      }
+      if(d)KP._heartbeats[snap.key]=d;
     });
     this._listeners.push({ref:hbListenRef,type:'child_added',fn:hbAddedFn});
+    const hbChangedFn=hbListenRef.on('child_changed',snap=>{
+      if(snap.key===this.playerName)return;
+      const d=snap.val();
+      if(d)KP._heartbeats[snap.key]=d;
+    });
+    this._listeners.push({ref:hbListenRef,type:'child_changed',fn:hbChangedFn});
     const hbRemovedFn=hbListenRef.on('child_removed',snap=>{
-      KP._onlineIds.delete(snap.key);
-      KP._removePlayerFromConsole(snap.key);
+      delete KP._heartbeats[snap.key];
     });
     this._listeners.push({ref:hbListenRef,type:'child_removed',fn:hbRemovedFn});
     const pcRef=this.db.ref(`rooms/${this.roomId}/playerCards`);
     const pcChangedFn=pcRef.on('child_changed',snap=>{
       if(snap.key===this.playerName)return;
       const card=snap.val();
-      if(card&&KP._onlineIds.has(snap.key)){
+      if(card){
         KP._playerCards[snap.key]=card;
         if(App.curTab==='dice')KP.renderConsole();
       }
     });
     this._listeners.push({ref:pcRef,type:'child_changed',fn:pcChangedFn});
+    KP._startPresencePolling();
     KP._startGhostCheck();
   },
 
@@ -6565,6 +6583,8 @@ const FB={
           this._listenChannels();
           this._listenMembers();
           await this._setupKPListeners();
+        }else{
+          KP._runPresencePoll();
         }
         this._toast('KP 连接已恢复','success');
       }else{
@@ -6658,7 +6678,10 @@ const KP={
   // Firebase
   _playerCards:{},
   _cardListenerFn:null,
-  _onlineIds:new Set(),
+  _onlineIds:new Set(),       // 'online' players (< 30s) — rebuilt by polling timer
+  _playerStatus:{},           // {playerId: 'online'|'away'|'offline'|'hidden'}
+  _heartbeats:{},             // cached heartbeat data from Firebase
+  _presenceTimer:null,
   // Sync debounces
   _syncDebounce:null,
   _condSyncDebounce:{}, _ghostTimer:null,
@@ -6682,6 +6705,7 @@ const KP={
       try{FB.db.ref(`rooms/${FB.roomId}/playerCards`).off('value',this._cardListenerFn);}catch(e){}
     }
     this._cardListenerFn=null;this._playerCards={};this._onlineIds=new Set();
+    this._playerStatus={};this._heartbeats={};this._stopPresencePolling();
   },
 
   _removePlayerFromConsole(playerId){
@@ -6711,6 +6735,47 @@ const KP={
     // before Firebase cleans up the node.
   },
 
+  _runPresencePoll(){
+    if(!FB.roomId||!FB.isKP)return;
+    const now=Date.now();
+    const ONLINE=30*1000,AWAY=5*60*1000,OFFLINE=30*60*1000;
+    const newStatus={},newOnline=new Set();
+    for(const pid of Object.keys(this._playerCards)){
+      if(pid===FB.playerName)continue;
+      const hb=this._heartbeats[pid];
+      const ls=hb?.lastSeen;
+      let s;
+      if(!ls){s='offline';}
+      else{const d=now-ls;s=d<ONLINE?'online':d<AWAY?'away':d<OFFLINE?'offline':'hidden';}
+      newStatus[pid]=s;
+      if(s==='online')newOnline.add(pid);
+    }
+    this._playerStatus=newStatus;
+    this._onlineIds=newOnline;
+    if(App.curTab==='dice')this.renderConsole();
+  },
+
+  _startPresencePolling(){
+    this._stopPresencePolling();
+    this._runPresencePoll();
+    this._presenceTimer=setInterval(()=>this._runPresencePoll(),10000);
+  },
+
+  _stopPresencePolling(){clearInterval(this._presenceTimer);this._presenceTimer=null;},
+
+  async _removeOfflinePlayer(playerId){
+    if(!FB.db||!FB.roomId||!FB.isKP)return;
+    try{
+      await Promise.all([
+        FB.db.ref(`rooms/${FB.roomId}/heartbeats/${playerId}`).remove(),
+        FB.db.ref(`rooms/${FB.roomId}/players/${playerId}`).remove(),
+      ]);
+      delete this._heartbeats[playerId];
+      this._removePlayerFromConsole(playerId);
+      FB._toast(`已将「${playerId}」移出战局`,'success');
+    }catch(e){console.error('removeOfflinePlayer:',e);FB._toast('移除失败: '+e.message,'error');}
+  },
+
   _startGhostCheck(){
     this._stopGhostCheck();
     const _doGhostCheck=async()=>{
@@ -6729,7 +6794,6 @@ const KP={
             }else{
               removes.push(FB.db.ref(`rooms/${FB.roomId}/heartbeats/${snap.key}`).remove());
               removes.push(FB.db.ref(`rooms/${FB.roomId}/players/${snap.key}`).remove());
-              removes.push(FB.db.ref(`rooms/${FB.roomId}/playerCards/${snap.key}`).remove());
             }
           });
         }
@@ -6806,7 +6870,9 @@ const KP={
   // Ordered list of card entries for the wall
   _buildCardEntries(){
     const saved=this.getCardOrder();
-    const playerIds=Object.keys(this._playerCards).filter(p=>p!==FB.playerName&&this._onlineIds.has(p)).sort();
+    const playerIds=Object.keys(this._playerCards)
+      .filter(p=>p!==FB.playerName&&(this._playerStatus[p]||'offline')!=='hidden')
+      .sort();
     const npcs=this.getNpcs();
     const all=[{type:'self',id:'__self__'},...playerIds.map(p=>({type:'player',id:p})),...npcs.map(n=>({type:'npc',id:n.id}))];
     if(!saved.length)return all;
@@ -6887,17 +6953,21 @@ const KP={
     const typeLabel={self:'KP',player:'玩家',npc:'NPC'}[type];
     const pidSpan=type==='player'?`<span class="kp-card-pid">@${esc(id)}</span>`:'';
     const npcBtns=type==='npc'?`<div class="kp-card-npc-actions"><button class="kp-card-npc-btn" data-card-edit="${esc(id)}">✎</button><button class="kp-card-npc-btn danger" data-card-del="${esc(id)}">✕</button></div>`:'';
-    const hdr=`<div class="kp-card-hdr" data-card-toggle="${esc(cardId)}"><span class="kp-card-drag">⠿</span><div class="kp-card-avatar" style="background:${avBg}">${avCont}</div><span class="kp-card-name">${esc(nm)}</span>${pidSpan}<span class="kp-card-type ${type}">${typeLabel}</span>${npcBtns}<span class="kp-card-collapse${isCollapsed?'':' open'}">▲</span></div>`;
+    const status=type==='player'?(this._playerStatus[id]||'offline'):'';
+    const dotHtml=type==='player'?`<span class="kp-presence-dot ${status}"></span>`:'';
+    const statusBadge=status==='away'?`<span class="kp-status-badge away">离开</span>`:status==='offline'?`<span class="kp-status-badge offline">掉线</span>`:'';
+    const hdr=`<div class="kp-card-hdr" data-card-toggle="${esc(cardId)}">${dotHtml}<span class="kp-card-drag">⠿</span><div class="kp-card-avatar" style="background:${avBg}">${avCont}</div><span class="kp-card-name">${esc(nm)}</span>${pidSpan}<span class="kp-card-type ${type}">${typeLabel}</span>${statusBadge}${npcBtns}<span class="kp-card-collapse${isCollapsed?'':' open'}">▲</span></div>`;
     let miniBar='';
     if(isCollapsed&&char?.coc){
       const hp=char.coc.HP||{cur:0,max:1},san=char.coc.SAN||{cur:0,max:1};
       miniBar=`<div class="kp-card-mini"><div class="kp-card-mini-bar"><div class="kp-card-mini-fill hp" style="width:${hp.max>0?clamp(hp.cur/hp.max*100,0,100):0}%"></div></div><div class="kp-card-mini-bar"><div class="kp-card-mini-fill san" style="width:${san.max>0?clamp(san.cur/san.max*100,0,100):0}%"></div></div></div>`;
     }
-    const body=`<div class="kp-card-body${isCollapsed?' hidden':''}">${this._genCardBody(type,id,char,isJudging)}</div>`;
-    return`<div class="kp-card${isJudging?' judge-active':''}" data-card-id="${esc(cardId)}" draggable="true">${hdr}${miniBar}${body}</div>`;
+    const body=`<div class="kp-card-body${isCollapsed?' hidden':''}">${this._genCardBody(type,id,char,isJudging,status)}</div>`;
+    const offlineCls=status==='offline'?' player-offline':'';
+    return`<div class="kp-card${isJudging?' judge-active':''}${offlineCls}" data-card-id="${esc(cardId)}" draggable="true">${hdr}${miniBar}${body}</div>`;
   },
 
-  _genCardBody(type,id,char,isJudging){
+  _genCardBody(type,id,char,isJudging,status=''){
     if(!char?.coc)return`<div style="padding:8px;font-size:11px;color:var(--dim)">无角色数据</div>`;
     const c=char.coc;
     const hp=c.HP||{cur:0,max:0},san=c.SAN||{cur:0,max:0},mp=c.MP||{cur:0,max:0};
@@ -6911,7 +6981,8 @@ const KP={
     const COND_LIST=[{key:'injured',label:'轻伤'},{key:'severelyInjured',label:'重伤'},{key:'unconscious',label:'昏迷'},{key:'tempInsane',label:'临时疯狂'},{key:'indefiniteInsane',label:'不定期疯狂'},{key:'permanentInsane',label:'永久疯狂'}];
     const condTags=COND_LIST.map(({key,label})=>`<span class="kp-cond ${key}${conds[key]?' active':''}" data-ccond="${esc(cardId)}" data-ckey="${key}">${label}</span>`).join('');
     const judgeLabel=isJudging?'✔ 正在判定':'▶ 以此角色判定';
-    return bars+`<div class="kp-card-conds">${condTags}</div><div class="kp-card-actions"><button class="kp-card-judge-btn${isJudging?' active':''}" data-card-judge="${esc(cardId)}">${judgeLabel}</button><button class="kp-card-detail-btn" data-card-detail="${esc(cardId)}">📋 详情</button></div>`;
+    const removeBtn=type==='player'&&status==='offline'?`<button class="kp-card-remove-btn" data-action="remove-player" data-player-id="${esc(id)}">🚪 移出战局</button>`:'';
+    return bars+`<div class="kp-card-conds">${condTags}</div><div class="kp-card-actions"><button class="kp-card-judge-btn${isJudging?' active':''}" data-card-judge="${esc(cardId)}">${judgeLabel}</button><button class="kp-card-detail-btn" data-card-detail="${esc(cardId)}">📋 详情</button>${removeBtn}</div>`;
   },
 
   _bindWallEvents(){
@@ -6977,6 +7048,15 @@ const KP={
         const npcs=this.getNpcs().filter(n=>n.id!==id);this.saveNpcs(npcs);
         if(this._judgeCharType==='npc'&&this._judgeCharId===id)this.setJudgeChar('self',null);
         else this.renderConsole();
+      });
+    });
+    // Remove offline player from battle (preserves playerCards — not a kick)
+    scroll.querySelectorAll('[data-action="remove-player"]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const pid=btn.dataset.playerId;
+        if(confirm(`将「${pid}」移出战局？\n角色卡数据保留，该玩家可随时重新加入。`))
+          this._removeOfflinePlayer(pid);
       });
     });
     // Judge indicator dropdown
