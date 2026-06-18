@@ -5683,6 +5683,7 @@ const FB={
   db:null, roomId:null, playerName:null, isKP:false,
   activeCh:'general', channels:{}, members:{},
   channelList:{}, _kpChListeners:{}, _histFilterCh:'',
+  _wasDisconnected:false,
   _listeners:[], _rollRef:null, _rollListener:null,
   _playerRef:null, _hostRef:null, _membersCollapsed:false,
   _subChCollapsed:false, _kpAdjDebounce:{},
@@ -5694,6 +5695,12 @@ const FB={
       const app=firebase.apps.length?firebase.apps[0]:firebase.initializeApp(firebaseConfig);
       this.db=firebase.database(app);
       this._subChCollapsed=localStorage.getItem('fb_subch_collapsed')==='1';
+      // .info/connected: first true = initial connect (skip); subsequent true = reconnect
+      this.db.ref('.info/connected').on('value',snap=>{
+        if(!snap.val()){_fbEverConnected=false;this._wasDisconnected=true;return;}
+        if(!_fbEverConnected){_fbEverConnected=true;return;}
+        _scheduleReconnect();
+      });
     }catch(e){console.error('Firebase init:',e);}
   },
 
@@ -5803,16 +5810,7 @@ const FB={
       }catch(e){console.warn('幽灵清理失败:',e);}
 
       // Step 4: Write own presence + heartbeat + onDisconnect
-      this._playerRef=this.db.ref(`rooms/${this.roomId}/players/${this.playerName}`);
-      const charSnap=this._charSnapshot();
-      await this._playerRef.set({online:true,ts:Date.now(),lastSeen:Date.now(),isKP:this.isKP,char:charSnap,
-        characterName:charSnap&&charSnap.name?charSnap.name:'',currentChannel:'general'});
-      this._playerRef.onDisconnect().update({online:false,lastSeen:Date.now()});
-      this._hbRef=this.db.ref(`rooms/${this.roomId}/heartbeats/${this.playerName}`);
-      this._hbRef.onDisconnect().remove();
-      await this._hbRef.set({lastSeen:Date.now(),characterName:charSnap?.name||this.playerName});
-      // playerCards onDisconnect: clean up when player disconnects
-      this.db.ref(`rooms/${this.roomId}/playerCards/${this.playerName}`).onDisconnect().remove();
+      await this._setupPlayerPresence();
 
       // Ensure default channels exist
       const clRef=this.db.ref(`rooms/${this.roomId}/channelList`);
@@ -5851,51 +5849,7 @@ const FB={
       this._startFbHeartbeat();
 
       if(this.isKP){
-        KP._judgeCharType='self';KP._judgeCharId=null;KP._judgeChar=null;
-        // Step 1: Pre-populate _onlineIds from current heartbeats so the
-        //         playerCards value listener immediately filters correctly
-        try{
-          const now=Date.now();
-          const initHbSnap=await this.db.ref(`rooms/${this.roomId}/heartbeats`).once('value');
-          KP._onlineIds=new Set([this.playerName]);
-          if(initHbSnap.exists()){
-            initHbSnap.forEach(s=>{
-              const d=s.val();
-              if(d&&d.lastSeen&&(now-d.lastSeen)<300000)KP._onlineIds.add(s.key);
-            });
-          }
-        }catch(e){console.warn('初始在线列表加载失败:',e);KP._onlineIds=new Set([this.playerName]);}
-        // Step 2: Start playerCards value listener (now _onlineIds is populated)
-        KP.startListening();
-        App.renderDiceTab?.();
-        // Steps 3 & 4: Heartbeat listeners for players joining / leaving
-        const hbListenRef=this.db.ref(`rooms/${this.roomId}/heartbeats`);
-        const hbAddedFn=hbListenRef.on('child_added',snap=>{
-          if(snap.key===this.playerName)return; // skip self
-          const d=snap.val();
-          if(d&&d.lastSeen&&(Date.now()-d.lastSeen)<300000){
-            KP._onlineIds.add(snap.key);
-            if(App.curTab==='dice')KP.renderConsole();
-          }
-        });
-        this._listeners.push({ref:hbListenRef,type:'child_added',fn:hbAddedFn});
-        const hbRemovedFn=hbListenRef.on('child_removed',snap=>{
-          KP._onlineIds.delete(snap.key);
-          KP._removePlayerFromConsole(snap.key);
-        });
-        this._listeners.push({ref:hbListenRef,type:'child_removed',fn:hbRemovedFn});
-        // Step 5: playerCards child_changed → update cached card and re-render
-        const pcRef=this.db.ref(`rooms/${this.roomId}/playerCards`);
-        const pcChangedFn=pcRef.on('child_changed',snap=>{
-          if(snap.key===this.playerName)return;
-          const card=snap.val();
-          if(card&&KP._onlineIds.has(snap.key)){
-            KP._playerCards[snap.key]=card;
-            if(App.curTab==='dice')KP.renderConsole();
-          }
-        });
-        this._listeners.push({ref:pcRef,type:'child_changed',fn:pcChangedFn});
-        KP._startGhostCheck();
+        await this._setupKPListeners();
       }else{
         await _checkJoinNameConflict();
         _syncPlayerCard();
@@ -6512,6 +6466,112 @@ const FB={
       const{roomId,playerName}=JSON.parse(raw);
       if(roomId&&playerName)await this.joinRoom(roomId,playerName);
     }catch(e){}
+  },
+
+  // ── Extracted presence writer — called by joinRoom (Step 4) and _reconnectRestore ──
+  async _setupPlayerPresence(){
+    this._playerRef=this.db.ref(`rooms/${this.roomId}/players/${this.playerName}`);
+    const charSnap=this._charSnapshot();
+    await this._playerRef.set({online:true,ts:Date.now(),lastSeen:Date.now(),isKP:this.isKP,char:charSnap,
+      characterName:charSnap&&charSnap.name?charSnap.name:'',currentChannel:this.activeCh||'general'});
+    this._playerRef.onDisconnect().update({online:false,lastSeen:Date.now()});
+    this._hbRef=this.db.ref(`rooms/${this.roomId}/heartbeats/${this.playerName}`);
+    this._hbRef.onDisconnect().remove();
+    await this._hbRef.set({lastSeen:Date.now(),characterName:charSnap?.name||this.playerName});
+    this.db.ref(`rooms/${this.roomId}/playerCards/${this.playerName}`).onDisconnect().remove();
+  },
+
+  // ── Extracted KP listener builder — called by joinRoom and _reconnectRestore ──
+  async _setupKPListeners(){
+    KP._judgeCharType='self';KP._judgeCharId=null;KP._judgeChar=null;
+    try{
+      const now=Date.now();
+      const initHbSnap=await this.db.ref(`rooms/${this.roomId}/heartbeats`).once('value');
+      KP._onlineIds=new Set([this.playerName]);
+      if(initHbSnap.exists()){
+        initHbSnap.forEach(s=>{
+          const d=s.val();
+          if(d&&d.lastSeen&&(now-d.lastSeen)<300000)KP._onlineIds.add(s.key);
+        });
+      }
+    }catch(e){console.warn('初始在线列表加载失败:',e);KP._onlineIds=new Set([this.playerName]);}
+    KP.startListening();
+    App.renderDiceTab?.();
+    const hbListenRef=this.db.ref(`rooms/${this.roomId}/heartbeats`);
+    const hbAddedFn=hbListenRef.on('child_added',snap=>{
+      if(snap.key===this.playerName)return;
+      const d=snap.val();
+      if(d&&d.lastSeen&&(Date.now()-d.lastSeen)<300000){
+        KP._onlineIds.add(snap.key);
+        if(App.curTab==='dice')KP.renderConsole();
+      }
+    });
+    this._listeners.push({ref:hbListenRef,type:'child_added',fn:hbAddedFn});
+    const hbRemovedFn=hbListenRef.on('child_removed',snap=>{
+      KP._onlineIds.delete(snap.key);
+      KP._removePlayerFromConsole(snap.key);
+    });
+    this._listeners.push({ref:hbListenRef,type:'child_removed',fn:hbRemovedFn});
+    const pcRef=this.db.ref(`rooms/${this.roomId}/playerCards`);
+    const pcChangedFn=pcRef.on('child_changed',snap=>{
+      if(snap.key===this.playerName)return;
+      const card=snap.val();
+      if(card&&KP._onlineIds.has(snap.key)){
+        KP._playerCards[snap.key]=card;
+        if(App.curTab==='dice')KP.renderConsole();
+      }
+    });
+    this._listeners.push({ref:pcRef,type:'child_changed',fn:pcChangedFn});
+    KP._startGhostCheck();
+  },
+
+  // ── Reconnect restore — called by visibilitychange and .info/connected ──
+  async _reconnectRestore(){
+    if(!this.roomId||!this.db||!this.playerName)return;
+    const hadDisconnect=this._wasDisconnected;
+    this._wasDisconnected=false;
+    try{
+      await this._setupPlayerPresence();
+      if(this.isKP){
+        // Read host node — do NOT use transaction (avoid displacing another KP)
+        const hostSnap=await this.db.ref(`rooms/${this.roomId}/host`).once('value');
+        const hostData=hostSnap.val();
+        if(hostData&&hostData.playerId&&hostData.playerId!==this.playerName){
+          // KP identity transferred to someone else while disconnected
+          this.isKP=false;
+          _showKPTools(false);
+          document.body.classList.add('fb-nonkp-room');
+          _syncPlayerCard();
+          this._toast('KP身份已转移，当前以普通玩家身份在线','info');
+          return;
+        }
+        // Still KP — re-claim host node if it was removed by onDisconnect
+        if(!hostData||!hostData.playerId){
+          await this.db.ref(`rooms/${this.roomId}/host`).set({playerId:this.playerName,setAt:Date.now()});
+        }
+        this._hostRef=this.db.ref(`rooms/${this.roomId}/host`);
+        this._hostRef.onDisconnect().remove();
+        if(hadDisconnect){
+          // Full listener teardown + rebuild — only after an actual Firebase disconnect
+          for(const {ref,type,fn} of this._listeners){try{ref.off(type,fn);}catch(e){}}
+          this._listeners=[];
+          for(const ch of Object.keys(this._kpChListeners)){
+            const l=this._kpChListeners[ch];
+            if(l&&l.ref)try{l.ref.off('child_added',l.fn);}catch(e){}
+          }
+          this._kpChListeners={};
+          KP.stopListening();
+          KP._stopGhostCheck();
+          this._listenChannels();
+          this._listenMembers();
+          await this._setupKPListeners();
+        }
+        this._toast('KP 连接已恢复','success');
+      }else{
+        _syncPlayerCard();
+        this._toast('连接已恢复','success');
+      }
+    }catch(e){console.error('reconnectRestore:',e);}
   },
 
   _updateChIndicator(chName){
@@ -7791,11 +7851,23 @@ App.save=function(){
   }
 };
 
+// ── Reconnect debounce + first-connect guard ────────────────────────────────
+let _reconnectDebounceTimer=null;
+let _fbEverConnected=false;
+function _scheduleReconnect(){
+  clearTimeout(_reconnectDebounceTimer);
+  _reconnectDebounceTimer=setTimeout(()=>FB._reconnectRestore(),2000);
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   spawnStars();FB.init();FB.bindUI();App.init();
   _cbBindStartModal();
   // Fix 3: auto-rejoin saved room on page load
   setTimeout(()=>{if(!FB.roomId)FB.rejoinRoom();},600);
+  // Reconnect recovery when tab becomes visible again
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'&&FB.roomId)_scheduleReconnect();
+  });
 });
 
 // Document-level delegation for kick player actions (avoids dynamic re-render event loss)
