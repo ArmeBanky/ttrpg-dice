@@ -1467,6 +1467,44 @@ body.fb-nonkp-room .cond-tag:hover{border-color:var(--border-bright)!important;c
 /* Remove from battle button */
 .kp-card-remove-btn{font-size:10px;height:32px;padding:0 8px;border:1px solid rgba(156,163,175,.25);border-radius:4px;background:transparent;color:#9ca3af;cursor:pointer;transition:all .15s;font-family:var(--font-body);flex-shrink:0;white-space:nowrap}
 .kp-card-remove-btn:hover{border-color:rgba(239,68,68,.45);color:#f87171}
+/* ───── FATE MODAL (天命投掷) ───── */
+#fateModal{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:9000}
+#fateModal.show{display:flex}
+.fate-sub{font-size:10px;color:var(--dim);letter-spacing:.5px;margin-top:2px;font-family:var(--font-body)}
+.fate-cnt-row{display:flex;align-items:center;gap:10px;margin:12px 0 8px;justify-content:center}
+.fate-cnt-label{font-family:var(--font-title);font-size:26px;font-weight:700;min-width:36px;text-align:center;color:var(--text)}
+.fate-cnt-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border-bright);background:transparent;color:var(--text-muted);cursor:pointer;font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:var(--font-body);flex-shrink:0}
+.fate-cnt-btn:hover{border-color:var(--gold);color:var(--gold)}
+.fate-results{display:flex;flex-direction:column;gap:8px;margin:14px 0 0;max-height:52vh;overflow-y:auto;padding-right:2px}
+.fate-group-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-left:3px solid rgba(201,168,76,.35);border-radius:6px;padding:10px 12px;opacity:0;transform:translateY(10px);animation:fateSlideIn .3s ease forwards}
+.fate-group-card.selected{border-color:var(--gold)!important;border-left-color:var(--gold)!important;box-shadow:0 0 0 1px rgba(201,168,76,.3);opacity:1!important}
+.fate-group-card.dimmed{opacity:.35!important;animation:none}
+.fate-group-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.fate-group-lbl{font-family:var(--font-title);font-size:13px;color:var(--gold);font-weight:700;letter-spacing:.5px}
+.fate-group-total{font-family:var(--font-title);font-size:17px;font-weight:700;color:var(--gold);margin-left:auto;margin-right:8px}
+.fate-badge-best{font-size:9px;padding:1px 6px;border:1px solid var(--gold);border-radius:10px;color:var(--gold);font-weight:700;letter-spacing:.3px;flex-shrink:0}
+.fate-attr-row{display:flex;flex-wrap:wrap;gap:5px 12px}
+.fate-attr-item{display:flex;align-items:baseline;gap:3px}
+.fate-attr-name{font-size:10px;color:var(--text-muted);letter-spacing:.3px}
+.fate-attr-val{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--text)}
+.fate-select-btn{font-size:11px;height:26px;padding:0 10px;flex-shrink:0;cursor:pointer}
+.fate-no-room{font-size:11px;color:var(--dim);margin-top:5px}
+@keyframes fateSlideIn{to{opacity:1;transform:translateY(0)}}
+@keyframes fateAttrGlow{0%{box-shadow:0 0 0 2px rgba(201,168,76,.85)}70%{box-shadow:0 0 0 3px rgba(201,168,76,.35)}100%{box-shadow:none}}
+.fate-attr-glow{animation:fateAttrGlow .9s ease forwards}
+.fate-total-nolck{font-family:var(--font-title);font-size:13px;font-weight:400;color:var(--text-muted);margin-left:6px;white-space:nowrap}
+#fateRerollBar{display:none;align-items:center;gap:10px;margin:2px 0 10px;justify-content:center}
+.fate-reroll-info{font-size:13px;color:var(--text-muted)}
+.fate-global-hint{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:5px;margin-bottom:8px;line-height:1.4}
+.fate-analysis{font-size:11px;color:var(--text-muted);margin-top:7px;line-height:1.5}
+.fate-strong{color:var(--text-muted)}
+.fate-weak-val{color:var(--color-danger)}
+.fate-jobs{color:var(--gold);font-family:var(--font-body)}
+.fate-reason{color:var(--dim)}
+@keyframes fateBreath{0%,100%{opacity:.3}50%{opacity:.8}}
+.fate-analyzing{animation:fateBreath 1.6s ease-in-out infinite}
+.fate-hist-dice{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.fate-hist-die{font-size:10px;color:var(--dim);line-height:1.4;font-family:var(--font-body)}
 /* "当前判定" indicator near skill check title */
 .kp-judge-indicator{display:none;align-items:center;gap:5px;padding:2px 8px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.28);border-radius:4px;font-size:11px;color:var(--gold);cursor:pointer;position:relative;flex-shrink:0;white-space:nowrap;margin-left:auto}
 .kp-judge-indicator.visible{display:flex}
@@ -2940,6 +2978,32 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
     <div class="cb-announce-sub" id="cbAnnounceSub">ROUND 1</div>
   </div>
 
+  <!-- Fate Modal (天命投掷 — COC 7th edition attribute generation) -->
+  <div id="fateModal">
+    <div class="cb-modal-box" style="width:min(560px,92vw);max-height:88vh;overflow-y:auto">
+      <div class="cb-modal-title">🎲 天命投掷<div class="fate-sub">COC 第七版 · 属性随机生成</div></div>
+      <div id="fateCtrlZone">
+        <div class="fate-cnt-row">
+          <button class="fate-cnt-btn" id="fateCntDec">−</button>
+          <span class="fate-cnt-label" id="fateCntNum">3</span>
+          <button class="fate-cnt-btn" id="fateCntInc">+</button>
+          <span style="font-size:12px;color:var(--dim);margin-left:2px">组</span>
+        </div>
+        <div style="display:flex;justify-content:center;margin-bottom:4px">
+          <button class="btn primary btn-ripple" id="fateBtnRoll" style="padding:6px 28px">开始投掷</button>
+        </div>
+      </div>
+      <div id="fateRerollBar">
+        <span class="fate-reroll-info" id="fateRollCount"></span>
+        <button class="btn" id="fateBtnReroll" style="padding:3px 14px;font-size:12px">重新投掷</button>
+      </div>
+      <div id="fateResults" class="fate-results"></div>
+      <div class="cb-modal-actions">
+        <button class="btn" id="fateBtnClose">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Combat start modal — lives in body, not inside any tab panel -->
   <div id="cbStartModal">
     <div class="cb-modal-box">
@@ -3756,7 +3820,7 @@ function renderCOCCard(char){
       <div class="card-sec-title">基础属性与衍生状态
         <span class="cc-sync-hint">→ 同步到骰子台右侧角色栏</span>
       </div>
-      <div class="cc-attr-group-label">基础属性</div>
+      <div class="cc-attr-group-label" style="display:flex;align-items:center;gap:8px">基础属性<button class="btn-tertiary" id="btnFateRoll" style="height:22px;padding:0 9px;font-size:11px;border-radius:4px;flex-shrink:0;cursor:pointer">🎲 天命投掷</button></div>
       <div class="attr-grid cc-attr-grid-main">${attrsHtml}</div>
       <div class="cc-attr-group-label" style="margin-top:10px">衍生状态</div>
       <div class="cc-derived-row">
@@ -3945,11 +4009,14 @@ function _histEntryHtml(e,myCharId){
   const isSelf=cid===myCharId&&!e.fromFB;
   const timeStr=new Date(ts).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
   const diceArr=Array.isArray(e.dice)?e.dice:(e.dice?[e.dice]:[]);
-  const diceHtml=diceArr.length?`<div class="hist-msg-dice">${diceArr.map(d=>`<span class="hist-die">${esc(String(d))}</span>`).join('')}</div>`:'';
+  const isFate=e.label==='天命投掷'||e.label==='天命选定';
+  const diceHtml=diceArr.length?(isFate
+    ?`<div class="fate-hist-dice">${diceArr.map(d=>`<div class="fate-hist-die">${esc(String(d))}</div>`).join('')}</div>`
+    :`<div class="hist-msg-dice">${diceArr.map(d=>`<span class="hist-die">${esc(String(d))}</span>`).join('')}</div>`):'';
   const results=e.results||[];
   const resHtml=results.length?results.map(r=>`<span class="hist-result-die">${Array.isArray(r)?r.join('|'):r}</span>`).join(''):'';
   const badgeHtml=_gradeBadgeHtml(e.grade);
-  const totalHtml=(e.total!==undefined&&e.total!==null)?`<span class="hist-msg-total">= ${e.total}</span>`:'';
+  const totalHtml=(e.total!==undefined&&e.total!==null&&!isFate)?`<span class="hist-msg-total">= ${e.total}</span>`:'';
   let modHtml='';
   if(e.diceModifier==='bonus'||e.diceModifier==='penalty'){
     const isBonus=e.diceModifier==='bonus';
@@ -4874,6 +4941,216 @@ const App={
     });
   },
 
+  /* ---- FATE ROLL (天命投掷) ---- */
+  _fateRoll3d6x5(){return(Math.ceil(Math.random()*6)+Math.ceil(Math.random()*6)+Math.ceil(Math.random()*6))*5;},
+  _fateRoll2d6p6x5(){return(Math.ceil(Math.random()*6)+Math.ceil(Math.random()*6)+6)*5;},
+  _rollFateGroup(){
+    return{
+      STR:this._fateRoll3d6x5(),CON:this._fateRoll3d6x5(),DEX:this._fateRoll3d6x5(),
+      APP:this._fateRoll3d6x5(),POW:this._fateRoll3d6x5(),LCK:this._fateRoll3d6x5(),
+      SIZ:this._fateRoll2d6p6x5(),INT:this._fateRoll2d6p6x5(),EDU:this._fateRoll2d6p6x5(),
+    };
+  },
+  _fateTotal(g){return g.STR+g.CON+g.SIZ+g.DEX+g.APP+g.INT+g.POW+g.EDU+g.LCK;},
+  _applyDerivedAttrs(coc){
+    const dv=cocDerived(coc);
+    if(!coc.HP)coc.HP={cur:dv.hpMax,max:dv.hpMax};else coc.HP.max=dv.hpMax;
+    if(!coc.MP)coc.MP={cur:dv.mpMax,max:dv.mpMax};else coc.MP.max=dv.mpMax;
+    if(!coc.SAN)coc.SAN={cur:coc.POW||50,max:dv.sanMax};else coc.SAN.max=dv.sanMax;
+  },
+  _fateGroups:[],
+  _fateSelected:false,
+
+  openFateModal(char){
+    this._fateGroups=[];this._fateSelected=false;
+    document.getElementById('fateCntNum').textContent='3';
+    document.getElementById('fateResults').innerHTML='';
+    document.getElementById('fateCtrlZone').style.display='';
+    document.getElementById('fateRerollBar').style.display='none';
+    document.getElementById('fateModal').classList.add('show');
+    document.getElementById('fateCntDec').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v>3)document.getElementById('fateCntNum').textContent=v-1;};
+    document.getElementById('fateCntInc').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v<10)document.getElementById('fateCntNum').textContent=v+1;};
+    document.getElementById('fateBtnRoll').onclick=()=>this._doFateRoll(char);
+    document.getElementById('fateBtnClose').onclick=()=>document.getElementById('fateModal').classList.remove('show');
+    document.getElementById('fateModal').onclick=e=>{if(e.target.id==='fateModal')document.getElementById('fateModal').classList.remove('show');};
+  },
+
+  _doFateRoll(char){
+    const n=Math.min(10,Math.max(3,parseInt(document.getElementById('fateCntNum').textContent)||3));
+    this._fateGroups=Array.from({length:n},()=>this._rollFateGroup());
+    this._fateSelected=false;
+    // Switch UI: hide controls, show re-roll bar
+    document.getElementById('fateCtrlZone').style.display='none';
+    document.getElementById('fateRollCount').textContent=`已投掷 ${n} 组`;
+    document.getElementById('fateRerollBar').style.display='flex';
+    document.getElementById('fateBtnReroll').onclick=()=>{
+      document.getElementById('fateCtrlZone').style.display='';
+      document.getElementById('fateRerollBar').style.display='none';
+      document.getElementById('fateResults').innerHTML='';
+      this._fateGroups=[];this._fateSelected=false;
+    };
+    S.pushHist({
+      ts:Date.now(),label:'天命投掷',
+      dice:this._fateGroups.map((g,i)=>`第${i+1}组: STR${g.STR} CON${g.CON} SIZ${g.SIZ} DEX${g.DEX} APP${g.APP} INT${g.INT} POW${g.POW} EDU${g.EDU} LCK${g.LCK} ｜总${this._fateTotal(g)}`),
+      total:0,charId:char.id,charName:char.name,
+    });
+    this._renderFateGroups(char);
+    this._fateRunAnalysis(); // async, non-blocking
+  },
+
+  _fateAttrColor(v){
+    if(v>=85)return'var(--gold-bright)';
+    if(v>=70)return'#c084fc';
+    if(v<=35)return'var(--color-danger)';
+    return'';
+  },
+
+  _fateStrengthAnalysis(g){
+    const ATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU'];
+    const strong=ATTRS.filter(k=>g[k]>=70).sort((a,b)=>g[b]-g[a]).slice(0,3);
+    const weak=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'].filter(k=>g[k]<=35);
+    const parts=[];
+    if(strong.length)parts.push(`强：${strong.map(k=>`${k} ${g[k]}`).join(' · ')}`);
+    if(weak.length)parts.push(`弱：${weak.map(k=>`<span class="fate-weak-val">${k} ${g[k]}</span>`).join(' · ')}`);
+    return parts.join(' ｜ ');
+  },
+
+  _fateJobFallback(g){
+    const rules=[
+      {k1:'EDU',k2:'INT',jobs:['侦探','学者','图书馆员'],r:'知识属性突出，适合智力型职业'},
+      {k1:'EDU',k2:'APP',jobs:['医生','律师','记者'],r:'教育与外貌兼备，适合专业人士'},
+      {k1:'STR',k2:'CON',jobs:['警察','运动员','士兵'],r:'体能出众，适合强体力职业'},
+      {k1:'APP',k2:'POW',jobs:['演员','骗子','传道士'],r:'魅力与意志强，适合社交型职业'},
+      {k1:'DEX',k2:'INT',jobs:['工程师','摄影师','盗贼'],r:'手眼协调与智力兼备'},
+      {k1:'POW',k2:'INT',jobs:['心理学家','神职人员','神秘学者'],r:'意志与智识强，适合精神型职业'},
+    ];
+    const best=rules.map(r=>({...r,score:g[r.k1]+g[r.k2]})).sort((a,b)=>b.score-a.score)[0];
+    return{jobs:best.jobs.slice(0,2),reason:best.r};
+  },
+
+  async _fateAnalyzeGroup(g,card){
+    const span=card.querySelector('.fate-ai-jobs');if(!span)return;
+    const fallback=()=>{
+      const fb=this._fateJobFallback(g);
+      span.innerHTML=`<span class="fate-jobs">${esc(fb.jobs.join('、'))}</span> — <span class="fate-reason">${esc(fb.reason)}</span>`;
+    };
+    try{
+      const ctrl=new AbortController();
+      const t=setTimeout(()=>ctrl.abort(),8000);
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',signal:ctrl.signal,
+        headers:{'content-type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({
+          model:'claude-3-5-haiku-20241022',max_tokens:300,
+          messages:[{role:'user',content:`你是COC第七版跑团车卡助手。根据以下调查员属性组，推荐2-3个适合的时代背景职业并给出简短理由。\n属性：STR ${g.STR} CON ${g.CON} SIZ ${g.SIZ} DEX ${g.DEX} APP ${g.APP} INT ${g.INT} POW ${g.POW} EDU ${g.EDU} LCK ${g.LCK}\n\n只返回JSON，不要任何其他文字和markdown标记：{"jobs":["职业1","职业2"],"reason":"一句话分析，30字以内"}`}],
+        }),
+      });
+      clearTimeout(t);
+      if(!resp.ok)throw 0;
+      const data=await resp.json();
+      const raw=(data.content?.[0]?.text||'').replace(/```json\n?|\n?```/g,'').trim();
+      const parsed=JSON.parse(raw);
+      const jobs=Array.isArray(parsed.jobs)?parsed.jobs.slice(0,3).join('、'):'';
+      if(!jobs)throw 0;
+      const reason=typeof parsed.reason==='string'?parsed.reason:'';
+      span.innerHTML=`<span class="fate-jobs">${esc(jobs)}</span>${reason?` — <span class="fate-reason">${esc(reason)}</span>`:''}`;
+    }catch(e){fallback();}
+  },
+
+  async _fateRunAnalysis(){
+    const el=document.getElementById('fateResults');if(!el)return;
+    const groups=[...this._fateGroups];
+    let idx=0;
+    const worker=async()=>{while(idx<groups.length){const i=idx++;const card=el.querySelector(`[data-fate-idx="${i}"]`);if(card)await this._fateAnalyzeGroup(groups[i],card);}};
+    await Promise.all([worker(),worker()]); // 2 concurrent
+  },
+
+  _renderFateGroups(char){
+    const el=document.getElementById('fateResults');if(!el)return;
+    const totals=this._fateGroups.map(g=>this._fateTotal(g));
+    const maxTotal=Math.max(...totals);
+    const inRoom=!!FB.roomId;
+    const globalHint=inRoom?'':`<div class="fate-global-hint">ⓘ 未连接房间 — 当前仅供试投，进入房间后与 KP 确认方可选定</div>`;
+    const attrs=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'];
+    const cardsHtml=this._fateGroups.map((g,i)=>{
+      const t=totals[i];
+      const noLck=t-g.LCK;
+      const bestBadge=t===maxTotal?`<span class="fate-badge-best">最高</span>`:'';
+      const noLckHtml=`<span class="fate-total-nolck">｜ 除LCK ${noLck}</span>`;
+      const attrsHtml=attrs.map(k=>{
+        const col=this._fateAttrColor(g[k]);
+        const style=col?` style="color:${col}"`:'';
+        return`<span class="fate-attr-item"><span class="fate-attr-name">${k}</span> <span class="fate-attr-val"${style}>${g[k]}</span></span>`;
+      }).join('');
+      const btnHtml=inRoom
+        ?`<button class="btn primary fate-select-btn" data-fate-select="${i}">选定此组</button>`
+        :`<button class="btn-tertiary fate-select-btn" disabled data-fate-select="${i}" style="opacity:.45;cursor:not-allowed">选定此组</button>`;
+      const strength=this._fateStrengthAnalysis(g);
+      const analysisHtml=`<div class="fate-analysis">${strength?`<span class="fate-strong">${strength}</span> ｜ `:''}适合：<span class="fate-ai-jobs"><span class="fate-analyzing">✦ 分析中…</span></span></div>`;
+      return`<div class="fate-group-card" data-fate-idx="${i}" style="animation-delay:${i*80}ms">
+        <div class="fate-group-hdr"><span class="fate-group-lbl">第${i+1}组</span>${bestBadge}<span class="fate-group-total">总点数 ${t}${noLckHtml}</span>${btnHtml}</div>
+        <div class="fate-attr-row">${attrsHtml}</div>
+        ${analysisHtml}
+      </div>`;
+    }).join('');
+    el.innerHTML=globalHint+cardsHtml;
+    el.querySelectorAll('[data-fate-select]:not([disabled])').forEach(btn=>{
+      btn.addEventListener('click',()=>this._selectFateGroup(char,parseInt(btn.dataset.fateSelect)));
+    });
+  },
+
+  async _selectFateGroup(char,idx){
+    if(this._fateSelected)return;
+    const g=this._fateGroups[idx];if(!g)return;
+    // KP online check (required when in room)
+    if(FB.roomId){
+      try{
+        const hostSnap=await FB.db.ref(`rooms/${FB.roomId}/host`).once('value');
+        const hostId=hostSnap.val()?.playerId;
+        if(!hostId){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+        const hbSnap=await FB.db.ref(`rooms/${FB.roomId}/heartbeats/${hostId}/lastSeen`).once('value');
+        const lastSeen=hbSnap.val();
+        if(!lastSeen||Date.now()-lastSeen>5*60*1000){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+      }catch(e){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+    }
+    this._fateSelected=true;
+    // Write attributes
+    const ATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'];
+    ATTRS.forEach(k=>{char.coc[k]=g[k];});
+    this._applyDerivedAttrs(char.coc);
+    this.save();
+    // Selection history
+    S.pushHist({
+      ts:Date.now(),label:'天命选定',
+      dice:[`选定第${idx+1}组作为角色属性 ｜总${this._fateTotal(g)}`],
+      total:0,charId:char.id,charName:char.name,
+    });
+    // Visual feedback on result cards
+    const resEl=document.getElementById('fateResults');
+    if(resEl){
+      resEl.querySelectorAll('.fate-group-card').forEach((card,i)=>{
+        card.classList.remove('selected','dimmed');
+        card.classList.add(i===idx?'selected':'dimmed');
+      });
+      resEl.querySelectorAll('[data-fate-select]').forEach((btn,i)=>{
+        btn.disabled=true;
+        if(i===idx){btn.className='btn-tertiary fate-select-btn';btn.textContent='已选定';}
+      });
+    }
+    // Re-render char card, then glow inputs
+    this.renderCharTab();
+    setTimeout(()=>{
+      const area=document.getElementById('charCardArea');if(!area)return;
+      area.querySelectorAll('[data-coc]').forEach(inp=>{
+        if(ATTRS.includes(inp.dataset.coc)){
+          inp.classList.add('fate-attr-glow');
+          inp.addEventListener('animationend',()=>inp.classList.remove('fate-attr-glow'),{once:true});
+        }
+      });
+    },50);
+    setTimeout(()=>document.getElementById('fateModal').classList.remove('show'),600);
+  },
+
   /* ---- CHAR CARD EVENTS ---- */
   bindCharCard(char){
     const area=document.getElementById('charCardArea');if(!area)return;
@@ -4885,9 +5162,22 @@ const App={
     };
 
     if(char.mode==='COC'){
+      document.getElementById('btnFateRoll')?.addEventListener('click',()=>this.openFateModal(char));
+      const _attrModDebounce={};
+      const FATE_ATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'];
       area.querySelectorAll('[data-coc]').forEach(inp=>{
         inp.addEventListener('change',()=>{
           const f=inp.dataset.coc,v=inp.type==='number'?parseInt(inp.value)||0:inp.value;
+          // Debounced attribute-change trail (room only, numeric attrs only)
+          if(FB.roomId&&FATE_ATTRS.includes(f)){
+            if(!_attrModDebounce[f]){_attrModDebounce[f]={oldVal:char.coc[f]??0,timer:null};}
+            clearTimeout(_attrModDebounce[f].timer);
+            _attrModDebounce[f].timer=setTimeout(()=>{
+              const rec=_attrModDebounce[f];if(!rec)return;
+              S.pushHist({ts:Date.now(),label:'属性修改',dice:[`${f}: ${rec.oldVal} → ${char.coc[f]}`],total:0,charId:char.id,charName:char.name});
+              delete _attrModDebounce[f];
+            },2000);
+          }
           char.coc[f]=v;
           const dv=cocDerived(char.coc);
           char.coc.HP.max=dv.hpMax;char.coc.MP.max=dv.mpMax;char.coc.SAN.max=dv.sanMax;
