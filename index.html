@@ -1515,6 +1515,7 @@ body.fb-nonkp-room .cond-tag:hover{border-color:var(--border-bright)!important;c
 .fate-err-line{color:var(--color-warning);font-size:11px;margin-bottom:2px}
 @keyframes fateBreath{0%,100%{opacity:.3}50%{opacity:.8}}
 .fate-analyzing{animation:fateBreath 1.6s ease-in-out infinite}
+.fate-deep-hint{font-size:10px;color:var(--dim);margin-left:5px;opacity:.75}
 .fate-hist-dice{display:flex;flex-direction:column;gap:2px;margin-top:4px}
 .fate-hist-die{font-size:10px;color:var(--dim);line-height:1.4;font-family:var(--font-body)}
 /* "当前判定" indicator near skill check title */
@@ -5062,15 +5063,21 @@ const App={
     const hp=dv.hpMax,db=ex.db,jobPts=(g.EDU||0)*4,intPts=(g.INT||0)*2;
     const systemPrompt=`你是《克苏鲁的呼唤》第七版资深守秘人，帮玩家分析车卡属性组。\n规则背景：STR体力、CON耐力、SIZ体型、DEX敏捷、APP外貌、INT智力、POW意志、EDU教育、LCK幸运。\n衍生：HP=(CON+SIZ)/10取整；DB和体格由STR+SIZ决定（<65为-2，65-84为-1，85-124为0，125-164为+1D4，165-204为+1D6）；SAN初始=POW；MP=POW/5取整；职业点多数为EDU×4；兴趣点=INT×2；闪避基础=DEX/2取整。\n分析原则：\n1.看属性组合与相互作用，不只挑最高几项。高INT高EDU但CON+SIZ低是智囊但极脆；高APP高POW配低STR适合灵媒/神职/骗子。\n2.明确指出这组卡最大隐患（HP低、DB负、职业点不足、SAN脆等）。\n3.职业从7版全范围考虑，冷门组合优先推荐冷门职业，避免总推荐学者/侦探/医生。\n4.推荐理由说明"这个组合"为何适合，而非罗列高属性。\n只返回JSON，不加任何其他文字和markdown标记。`;
     const userPrompt=`属性组：STR${g.STR} CON${g.CON} SIZ${g.SIZ} DEX${g.DEX} APP${g.APP} INT${g.INT} POW${g.POW} EDU${g.EDU} LCK${g.LCK}\n衍生：HP${hp} DB${db} 职业点(EDU×4)${jobPts} 兴趣点${intPts}\n返回格式：{"archetype":"四字以内定位如脆皮智囊","jobs":[{"name":"职业","why":"20字内说明组合原因"}]（3个）,"warning":"最大隐患25字内"}`;
+    let hintTimer;
     try{
       const ctrl=new AbortController();
-      const t=setTimeout(()=>ctrl.abort(),8000);
+      const t=setTimeout(()=>ctrl.abort(),30000);
+      hintTimer=setTimeout(()=>{
+        const s=aiZone.querySelector('.fate-analyzing');
+        if(s)s.insertAdjacentHTML('afterend','<span class="fate-deep-hint">（深度分析中，约需 10-20 秒）</span>');
+      },5000);
       const resp=await fetch(AI_PROXY_URL,{
         method:'POST',signal:ctrl.signal,
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({system:systemPrompt,user:userPrompt}),
       });
       clearTimeout(t);
+      clearTimeout(hintTimer);
       if(!resp.ok){
         const errBody=await resp.json().catch(()=>null);
         const msg=errBody?.error||resp.statusText||'';
@@ -5089,6 +5096,7 @@ const App={
       const warnHtml=warning?`<div class="fate-warning-line">⚠ ${esc(warning)}</div>`:'';
       aiZone.innerHTML=`<div class="fate-r1">${archetypeBadge}${strength?`<span class="fate-strength-line">${strength}</span>`:''}</div><div class="fate-r2">适合：${jobsHtml}</div>${warnHtml}`;
     }catch(err){
+      clearTimeout(hintTimer);
       const fb=this._fateJobFallback(g);
       const reason=err&&err.status?`${err.status} ${err.msg||''}`.trim():(err&&err.message?err.message:'超时或网络错误');
       aiZone.innerHTML=`${strHtml}<div class="fate-err-line">✦ AI 分析失败(${esc(reason)})，已使用基础规则</div>${this._fateFallbackJobsHtml(fb)}`;
