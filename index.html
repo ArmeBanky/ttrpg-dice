@@ -1496,11 +1496,33 @@ body.fb-nonkp-room .cond-tag:hover{border-color:var(--border-bright)!important;c
 #fateRerollBar{display:none;align-items:center;gap:10px;margin:2px 0 10px;justify-content:center}
 .fate-reroll-info{font-size:13px;color:var(--text-muted)}
 .fate-global-hint{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:5px;margin-bottom:8px;line-height:1.4}
-.fate-analysis{font-size:11px;color:var(--text-muted);margin-top:7px;line-height:1.5}
-.fate-strong{color:var(--text-muted)}
+/* AI settings panel */
+.fate-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.fate-gear-btn{background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:13px;padding:2px 7px;line-height:1.6;flex-shrink:0;margin-top:2px;transition:all .15s}
+.fate-gear-btn:hover{border-color:var(--gold);color:var(--gold)}
+.fate-ai-cfg{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:10px 12px;margin-bottom:8px}
+.fate-ai-cfg-row{display:flex;gap:6px;align-items:center}
+.fate-ai-cfg-input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--border-bright);border-radius:4px;color:var(--text);font-size:12px;padding:4px 8px;font-family:var(--font-body)}
+.fate-key-status{font-size:10px;margin-top:5px;color:var(--dim)}
+/* Analysis zone */
+.fate-analysis{font-size:11px;color:var(--text-muted);margin-top:7px;line-height:1.6}
+.fate-strength-line{color:var(--text-muted);margin-bottom:2px}
 .fate-weak-val{color:var(--color-danger)}
-.fate-jobs{color:var(--gold);font-family:var(--font-body)}
+/* AI result rows */
+.fate-r1{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:2px}
+.fate-r2{margin-bottom:2px;line-height:1.7}
+.fate-r3{font-size:11px}
+.fate-archetype-badge{font-size:10px;padding:1px 7px;border:1px solid var(--gold);border-radius:10px;color:var(--gold);font-weight:700;letter-spacing:.3px;flex-shrink:0;white-space:nowrap}
+.fate-job-item{display:inline}
+.fate-job-name{color:var(--gold);font-family:var(--font-body)}
+.fate-job-why{color:var(--dim);font-size:11px}
+.fate-warning-line{color:var(--color-warning);font-size:11px;margin-top:1px}
+/* Fallback / error lines */
+.fate-fallback-line{color:var(--dim);font-size:11px}
 .fate-reason{color:var(--dim)}
+.fate-cfg-link{color:rgba(201,168,76,.7);cursor:pointer;text-decoration:underline;font-size:11px;margin-left:5px}
+.fate-cfg-link:hover{color:var(--gold)}
+.fate-err-line{color:var(--color-warning);font-size:11px;margin-bottom:2px}
 @keyframes fateBreath{0%,100%{opacity:.3}50%{opacity:.8}}
 .fate-analyzing{animation:fateBreath 1.6s ease-in-out infinite}
 .fate-hist-dice{display:flex;flex-direction:column;gap:2px;margin-top:4px}
@@ -2981,7 +3003,20 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
   <!-- Fate Modal (天命投掷 — COC 7th edition attribute generation) -->
   <div id="fateModal">
     <div class="cb-modal-box" style="width:min(560px,92vw);max-height:88vh;overflow-y:auto">
-      <div class="cb-modal-title">🎲 天命投掷<div class="fate-sub">COC 第七版 · 属性随机生成</div></div>
+      <div class="cb-modal-title">
+        <div class="fate-title-row">
+          <div>🎲 天命投掷<div class="fate-sub">COC 第七版 · 属性随机生成</div></div>
+          <button class="fate-gear-btn" id="fateGearBtn" title="配置 AI 分析">⚙</button>
+        </div>
+      </div>
+      <div id="fateAiCfg" class="fate-ai-cfg" style="display:none">
+        <div class="fate-ai-cfg-row">
+          <input type="password" id="fateApiKeyInp" class="fate-ai-cfg-input" placeholder="粘贴 Anthropic API Key（sk-ant-…）">
+          <button class="btn-tertiary" id="fateApiKeySave" style="font-size:11px;padding:3px 10px">保存</button>
+          <button class="btn-tertiary" id="fateApiKeyClear" style="font-size:11px;padding:3px 10px">清除</button>
+        </div>
+        <div id="fateKeyStatus" class="fate-key-status">未配置</div>
+      </div>
       <div id="fateCtrlZone">
         <div class="fate-cnt-row">
           <button class="fate-cnt-btn" id="fateCntDec">−</button>
@@ -4967,12 +5002,33 @@ const App={
     document.getElementById('fateResults').innerHTML='';
     document.getElementById('fateCtrlZone').style.display='';
     document.getElementById('fateRerollBar').style.display='none';
+    document.getElementById('fateAiCfg').style.display='none';
     document.getElementById('fateModal').classList.add('show');
+    this._fateUpdateKeyStatus();
     document.getElementById('fateCntDec').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v>3)document.getElementById('fateCntNum').textContent=v-1;};
     document.getElementById('fateCntInc').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v<10)document.getElementById('fateCntNum').textContent=v+1;};
     document.getElementById('fateBtnRoll').onclick=()=>this._doFateRoll(char);
     document.getElementById('fateBtnClose').onclick=()=>document.getElementById('fateModal').classList.remove('show');
     document.getElementById('fateModal').onclick=e=>{if(e.target.id==='fateModal')document.getElementById('fateModal').classList.remove('show');};
+    document.getElementById('fateGearBtn').onclick=()=>{
+      const p=document.getElementById('fateAiCfg');
+      p.style.display=p.style.display==='none'?'':'none';
+      this._fateUpdateKeyStatus();
+    };
+    document.getElementById('fateApiKeySave').onclick=()=>{
+      const v=document.getElementById('fateApiKeyInp').value.trim();
+      if(!v)return;
+      localStorage.setItem('ttrpg_ai_key',v);
+      document.getElementById('fateApiKeyInp').value='';
+      this._fateUpdateKeyStatus();
+      // Re-trigger analysis if groups already rolled
+      if(this._fateGroups.length)this._fateRunAnalysis();
+    };
+    document.getElementById('fateApiKeyClear').onclick=()=>{
+      localStorage.removeItem('ttrpg_ai_key');
+      document.getElementById('fateApiKeyInp').value='';
+      this._fateUpdateKeyStatus();
+    };
   },
 
   _doFateRoll(char){
@@ -5028,41 +5084,97 @@ const App={
     return{jobs:best.jobs.slice(0,2),reason:best.r};
   },
 
-  async _fateAnalyzeGroup(g,card){
-    const span=card.querySelector('.fate-ai-jobs');if(!span)return;
-    const fallback=()=>{
+  _fateGetKey(){return localStorage.getItem('ttrpg_ai_key')||'';},
+
+  _fateUpdateKeyStatus(){
+    const el=document.getElementById('fateKeyStatus');if(!el)return;
+    const k=this._fateGetKey();
+    if(k){el.textContent=`当前：${k.slice(0,10)}…${k.slice(-4)}`;el.style.color='var(--gold-bright)';}
+    else{el.textContent='未配置';el.style.color='var(--dim)';}
+  },
+
+  _fateFallbackJobsHtml(fb){
+    const jobs=(fb.jobs||[]).map(j=>`<span class="fate-job-name">${esc(j)}</span>`).join('、');
+    return`<div class="fate-fallback-line">◇ ${jobs} — <span class="fate-reason">${esc(fb.reason||'')}</span></div>`;
+  },
+
+  _fateInitAiZone(g,showCfgLink){
+    const strength=this._fateStrengthAnalysis(g);
+    const strHtml=strength?`<div class="fate-strength-line">${strength}</div>`:'';
+    if(!this._fateGetKey()){
       const fb=this._fateJobFallback(g);
-      span.innerHTML=`<span class="fate-jobs">${esc(fb.jobs.join('、'))}</span> — <span class="fate-reason">${esc(fb.reason)}</span>`;
-    };
+      const jobs=(fb.jobs||[]).map(j=>`<span class="fate-job-name">${esc(j)}</span>`).join('、');
+      const lnk=showCfgLink?` <span class="fate-cfg-link">配置 AI 分析</span>`:'';
+      return`${strHtml}<div class="fate-fallback-line">◇ 基础规则推荐：${jobs} — <span class="fate-reason">${esc(fb.reason||'')}</span>${lnk}</div>`;
+    }
+    return`${strHtml}<div><span class="fate-analyzing">✦ AI 分析中…</span></div>`;
+  },
+
+  async _fateAnalyzeGroup(g,card){
+    const aiZone=card.querySelector('.fate-ai-zone');if(!aiZone)return;
+    const key=this._fateGetKey();
+    const strength=this._fateStrengthAnalysis(g);
+    const strHtml=strength?`<div class="fate-strength-line">${strength}</div>`:'';
+    if(!key){
+      const fb=this._fateJobFallback(g);
+      const jobs=(fb.jobs||[]).map(j=>`<span class="fate-job-name">${esc(j)}</span>`).join('、');
+      aiZone.innerHTML=`${strHtml}<div class="fate-fallback-line">◇ 基础规则推荐：${jobs} — <span class="fate-reason">${esc(fb.reason||'')}</span> <span class="fate-cfg-link">配置 AI 分析</span></div>`;
+      const lnk=aiZone.querySelector('.fate-cfg-link');
+      if(lnk)lnk.onclick=()=>{const p=document.getElementById('fateAiCfg');if(p){p.style.display='';this._fateUpdateKeyStatus();}};
+      return;
+    }
+    // Derived values for prompt
+    const dv=cocDerived(g);
+    const ex=cocExtras(g);
+    const hp=dv.hpMax,db=ex.db,jobPts=(g.EDU||0)*4,intPts=(g.INT||0)*2;
     try{
       const ctrl=new AbortController();
       const t=setTimeout(()=>ctrl.abort(),8000);
       const resp=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',signal:ctrl.signal,
-        headers:{'content-type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        headers:{
+          'content-type':'application/json',
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true',
+          'x-api-key':key,
+        },
         body:JSON.stringify({
-          model:'claude-3-5-haiku-20241022',max_tokens:300,
-          messages:[{role:'user',content:`你是COC第七版跑团车卡助手。根据以下调查员属性组，推荐2-3个适合的时代背景职业并给出简短理由。\n属性：STR ${g.STR} CON ${g.CON} SIZ ${g.SIZ} DEX ${g.DEX} APP ${g.APP} INT ${g.INT} POW ${g.POW} EDU ${g.EDU} LCK ${g.LCK}\n\n只返回JSON，不要任何其他文字和markdown标记：{"jobs":["职业1","职业2"],"reason":"一句话分析，30字以内"}`}],
+          model:'claude-sonnet-5',max_tokens:600,
+          system:`你是《克苏鲁的呼唤》第七版资深守秘人，帮玩家分析车卡属性组。\n规则背景：STR体力、CON耐力、SIZ体型、DEX敏捷、APP外貌、INT智力、POW意志、EDU教育、LCK幸运。\n衍生：HP=(CON+SIZ)/10取整；DB和体格由STR+SIZ决定（<65为-2，65-84为-1，85-124为0，125-164为+1D4，165-204为+1D6）；SAN初始=POW；MP=POW/5取整；职业点多数为EDU×4；兴趣点=INT×2；闪避基础=DEX/2取整。\n分析原则：\n1.看属性组合与相互作用，不只挑最高几项。高INT高EDU但CON+SIZ低是智囊但极脆；高APP高POW配低STR适合灵媒/神职/骗子。\n2.明确指出这组卡最大隐患（HP低、DB负、职业点不足、SAN脆等）。\n3.职业从7版全范围考虑，冷门组合优先推荐冷门职业，避免总推荐学者/侦探/医生。\n4.推荐理由说明"这个组合"为何适合，而非罗列高属性。\n只返回JSON，不加任何其他文字和markdown标记。`,
+          messages:[{role:'user',content:`属性组：STR${g.STR} CON${g.CON} SIZ${g.SIZ} DEX${g.DEX} APP${g.APP} INT${g.INT} POW${g.POW} EDU${g.EDU} LCK${g.LCK}\n衍生：HP${hp} DB${db} 职业点(EDU×4)${jobPts} 兴趣点${intPts}\n返回格式：{"archetype":"四字以内定位如脆皮智囊","jobs":[{"name":"职业","why":"20字内说明组合原因"}]（3个）,"warning":"最大隐患25字内"}`}],
         }),
       });
       clearTimeout(t);
-      if(!resp.ok)throw 0;
+      if(!resp.ok){
+        const errBody=await resp.json().catch(()=>null);
+        const msg=errBody?.error?.message||resp.statusText||'';
+        throw{status:resp.status,msg};
+      }
       const data=await resp.json();
       const raw=(data.content?.[0]?.text||'').replace(/```json\n?|\n?```/g,'').trim();
       const parsed=JSON.parse(raw);
-      const jobs=Array.isArray(parsed.jobs)?parsed.jobs.slice(0,3).join('、'):'';
-      if(!jobs)throw 0;
-      const reason=typeof parsed.reason==='string'?parsed.reason:'';
-      span.innerHTML=`<span class="fate-jobs">${esc(jobs)}</span>${reason?` — <span class="fate-reason">${esc(reason)}</span>`:''}`;
-    }catch(e){fallback();}
+      const archetype=typeof parsed.archetype==='string'?parsed.archetype:'';
+      const jobs=Array.isArray(parsed.jobs)?parsed.jobs.slice(0,3):[];
+      const warning=typeof parsed.warning==='string'?parsed.warning:'';
+      if(!jobs.length)throw{status:0,msg:'空响应'};
+      const archetypeBadge=archetype?`<span class="fate-archetype-badge">${esc(archetype)}</span>`:'';
+      const jobsHtml=jobs.map(j=>`<span class="fate-job-item"><span class="fate-job-name">${esc(j.name||'')}</span>${j.why?` — <span class="fate-job-why">${esc(j.why)}</span>`:''}</span>`).join(' · ');
+      const warnHtml=warning?`<div class="fate-warning-line">⚠ ${esc(warning)}</div>`:'';
+      aiZone.innerHTML=`<div class="fate-r1">${archetypeBadge}${strHtml?`<span class="fate-strength-line">${strength}</span>`:''}</div><div class="fate-r2">适合：${jobsHtml}</div>${warnHtml}`;
+    }catch(err){
+      const fb=this._fateJobFallback(g);
+      const reason=err&&err.status?`${err.status} ${err.msg||''}`.trim():(err&&err.message?err.message:'超时或网络错误');
+      aiZone.innerHTML=`${strHtml}<div class="fate-err-line">✦ AI 分析失败(${esc(reason)})，已使用基础规则</div>${this._fateFallbackJobsHtml(fb)}`;
+    }
   },
 
   async _fateRunAnalysis(){
+    if(!this._fateGetKey())return;
     const el=document.getElementById('fateResults');if(!el)return;
     const groups=[...this._fateGroups];
     let idx=0;
     const worker=async()=>{while(idx<groups.length){const i=idx++;const card=el.querySelector(`[data-fate-idx="${i}"]`);if(card)await this._fateAnalyzeGroup(groups[i],card);}};
-    await Promise.all([worker(),worker()]); // 2 concurrent
+    await Promise.all([worker(),worker()]);
   },
 
   _renderFateGroups(char){
@@ -5085,8 +5197,8 @@ const App={
       const btnHtml=inRoom
         ?`<button class="btn primary fate-select-btn" data-fate-select="${i}">选定此组</button>`
         :`<button class="btn-tertiary fate-select-btn" disabled data-fate-select="${i}" style="opacity:.45;cursor:not-allowed">选定此组</button>`;
-      const strength=this._fateStrengthAnalysis(g);
-      const analysisHtml=`<div class="fate-analysis">${strength?`<span class="fate-strong">${strength}</span> ｜ `:''}适合：<span class="fate-ai-jobs"><span class="fate-analyzing">✦ 分析中…</span></span></div>`;
+      const aiInitHtml=this._fateInitAiZone(g,true);
+      const analysisHtml=`<div class="fate-analysis"><div class="fate-ai-zone">${aiInitHtml}</div></div>`;
       return`<div class="fate-group-card" data-fate-idx="${i}" style="animation-delay:${i*80}ms">
         <div class="fate-group-hdr"><span class="fate-group-lbl">第${i+1}组</span>${bestBadge}<span class="fate-group-total">总点数 ${t}${noLckHtml}</span>${btnHtml}</div>
         <div class="fate-attr-row">${attrsHtml}</div>
@@ -5096,6 +5208,10 @@ const App={
     el.innerHTML=globalHint+cardsHtml;
     el.querySelectorAll('[data-fate-select]:not([disabled])').forEach(btn=>{
       btn.addEventListener('click',()=>this._selectFateGroup(char,parseInt(btn.dataset.fateSelect)));
+    });
+    // Bind cfg links in no-key fallback cards
+    el.querySelectorAll('.fate-cfg-link').forEach(lnk=>{
+      lnk.onclick=()=>{const p=document.getElementById('fateAiCfg');if(p){p.style.display='';this._fateUpdateKeyStatus();}};
     });
   },
 
