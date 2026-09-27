@@ -1516,6 +1516,7 @@ body.fb-nonkp-room .cond-tag:hover{border-color:var(--border-bright)!important;c
 @keyframes fateBreath{0%,100%{opacity:.3}50%{opacity:.8}}
 .fate-analyzing{animation:fateBreath 1.6s ease-in-out infinite}
 .fate-deep-hint{font-size:10px;color:var(--dim);margin-left:5px;opacity:.75}
+.fate-room-hint{font-size:10px;color:var(--dim);margin-left:6px;opacity:.8}
 .fate-hist-dice{display:flex;flex-direction:column;gap:2px;margin-top:4px}
 .fate-hist-die{font-size:10px;color:var(--dim);line-height:1.4;font-family:var(--font-body)}
 /* "当前判定" indicator near skill check title */
@@ -2995,6 +2996,7 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
   <div id="fateModal">
     <div class="cb-modal-box" style="width:min(560px,92vw);max-height:88vh;overflow-y:auto">
       <div class="cb-modal-title">🎲 天命投掷<div class="fate-sub">COC 第七版 · 属性随机生成</div></div>
+      <div id="fateOneTimeWarn" style="display:none;color:var(--color-warning);font-size:12px;margin-bottom:8px;padding:6px 10px;background:rgba(255,179,71,.07);border:1px solid rgba(255,179,71,.2);border-radius:4px;line-height:1.5">⚠ 天命为一次性投掷，本次进房仅可投掷一次，请慎重选择组数</div>
       <div id="fateCtrlZone">
         <div class="fate-cnt-row">
           <button class="fate-cnt-btn" id="fateCntDec">−</button>
@@ -4982,6 +4984,7 @@ const App={
     document.getElementById('fateResults').innerHTML='';
     document.getElementById('fateCtrlZone').style.display='';
     document.getElementById('fateRerollBar').style.display='none';
+    document.getElementById('fateOneTimeWarn').style.display=(FB.roomId&&!FB.isKP)?'':'none';
     document.getElementById('fateModal').classList.add('show');
     document.getElementById('fateCntDec').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v>3)document.getElementById('fateCntNum').textContent=v-1;};
     document.getElementById('fateCntInc').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v<10)document.getElementById('fateCntNum').textContent=v+1;};
@@ -4994,16 +4997,21 @@ const App={
     const n=Math.min(10,Math.max(3,parseInt(document.getElementById('fateCntNum').textContent)||3));
     this._fateGroups=Array.from({length:n},()=>this._rollFateGroup());
     this._fateSelected=false;
-    // Switch UI: hide controls, show re-roll bar
+    // Mark as used for this session (in room, non-KP only)
+    if(FB.roomId&&!FB.isKP)FB._fateUsedThisSession=true;
+    // Switch UI: hide controls, show re-roll bar only outside room or for KP
+    const _canReroll=!FB.roomId||FB.isKP;
     document.getElementById('fateCtrlZone').style.display='none';
     document.getElementById('fateRollCount').textContent=`已投掷 ${n} 组`;
-    document.getElementById('fateRerollBar').style.display='flex';
-    document.getElementById('fateBtnReroll').onclick=()=>{
-      document.getElementById('fateCtrlZone').style.display='';
-      document.getElementById('fateRerollBar').style.display='none';
-      document.getElementById('fateResults').innerHTML='';
-      this._fateGroups=[];this._fateSelected=false;
-    };
+    if(_canReroll){
+      document.getElementById('fateRerollBar').style.display='flex';
+      document.getElementById('fateBtnReroll').onclick=()=>{
+        document.getElementById('fateCtrlZone').style.display='';
+        document.getElementById('fateRerollBar').style.display='none';
+        document.getElementById('fateResults').innerHTML='';
+        this._fateGroups=[];this._fateSelected=false;
+      };
+    }
     S.pushHist({
       ts:Date.now(),label:'天命投掷',
       dice:this._fateGroups.map((g,i)=>`第${i+1}组: STR${g.STR} CON${g.CON} SIZ${g.SIZ} DEX${g.DEX} APP${g.APP} INT${g.INT} POW${g.POW} EDU${g.EDU} LCK${g.LCK} ｜总${this._fateTotal(g)}`),
@@ -5051,6 +5059,11 @@ const App={
   _fateInitAiZone(g){
     const strength=this._fateStrengthAnalysis(g);
     const strHtml=strength?`<div class="fate-strength-line">${strength}</div>`:'';
+    if(!FB.roomId){
+      const fb=this._fateJobFallback(g);
+      const jobs=(fb.jobs||[]).map(j=>`<span class="fate-job-name">${esc(j)}</span>`).join('、');
+      return`${strHtml}<div class="fate-fallback-line">◇ 基础规则推荐：${jobs} — <span class="fate-reason">${esc(fb.reason||'')}</span><span class="fate-room-hint">进入房间后可使用 AI 分析</span></div>`;
+    }
     return`${strHtml}<div><span class="fate-analyzing">✦ AI 分析中…</span></div>`;
   },
 
@@ -5104,6 +5117,7 @@ const App={
   },
 
   async _fateRunAnalysis(){
+    if(!FB.roomId)return;
     const el=document.getElementById('fateResults');if(!el)return;
     const groups=[...this._fateGroups];
     let idx=0;
@@ -5208,7 +5222,16 @@ const App={
     };
 
     if(char.mode==='COC'){
-      document.getElementById('btnFateRoll')?.addEventListener('click',()=>this.openFateModal(char));
+      const _fateBtn=document.getElementById('btnFateRoll');
+      if(_fateBtn){
+        if(FB.roomId&&!FB.isKP&&FB._fateUsedThisSession){
+          _fateBtn.disabled=true;
+          _fateBtn.title='本次进房已使用天命，退出房间重进后可再次使用';
+          _fateBtn.style.cssText+=';opacity:.4;cursor:not-allowed';
+        }else{
+          _fateBtn.addEventListener('click',()=>this.openFateModal(char));
+        }
+      }
       const _attrModDebounce={};
       const FATE_ATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'];
       area.querySelectorAll('[data-coc]').forEach(inp=>{
@@ -6031,6 +6054,7 @@ function _chColor(id){return CH_COLORS[id]||'#8e44ad';}
 
 const FB={
   db:null, roomId:null, playerName:null, isKP:false,
+  _fateUsedThisSession:false,
   activeCh:'general', channels:{}, members:{},
   channelList:{}, _kpChListeners:{}, _histFilterCh:'',
   _wasDisconnected:false,
@@ -6213,6 +6237,7 @@ const FB={
         });
         this._listeners.push({ref:statusRef,type:'value',fn:statusFn});
       }
+      this._fateUsedThisSession=false;
       this._toast('已连接到 '+this.roomId+(this.isKP?' · 你是KP':''),'success');
     }catch(e){
       this._setDot('');
@@ -6261,6 +6286,7 @@ const FB={
       try{ref.off('child_added',fn);}catch(e){}
     }
     this._kpChListeners={};
+    this._fateUsedThisSession=false;
     this.roomId=null;this.isKP=false;this.channels={};this.members={};
     this.channelList={};this._histFilterCh='';
     this._updateUI(false);
