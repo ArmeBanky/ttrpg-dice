@@ -643,11 +643,13 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 
 /* ============ RESPONSIVE ============ */
 @media(max-width:900px){.game-layout{grid-template-columns:1fr;grid-template-rows:auto auto}.game-right{border-left:none;border-top:1px solid var(--border-g);max-height:50vh}.dnd-attr-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.dice-grid{gap:8px}.die-shape{width:56px;height:56px}.die-inner{font-size:11px!important}#topbar{flex-wrap:wrap;height:auto;padding:8px 14px}}
+@media(max-width:600px){.dice-grid{gap:8px}.die-shape{width:56px;height:56px}.die-inner{font-size:11px!important}#topbar{display:flex;flex-wrap:wrap;height:auto;padding:8px 14px;gap:8px}}
 
 /* ============ LAYOUT ============ */
 #app{display:flex;flex-direction:column;height:100vh}
-#topbar{display:flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 100%);border-bottom:1px solid var(--border-g);box-shadow:0 2px 16px rgba(0,0,0,.5);flex-shrink:0;flex-wrap:wrap;min-height:64px}
+#topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:11px 20px;background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 100%);border-bottom:1px solid var(--border-g);box-shadow:0 2px 16px rgba(0,0,0,.5);flex-shrink:0;min-height:64px}
+.tb-left{display:flex;align-items:center;gap:8px;justify-self:start}
+.tb-right{display:flex;align-items:center;gap:8px;justify-self:end}
 #main{flex:1;overflow:hidden;position:relative}
 .tab-panel{position:absolute;inset:0;display:none;overflow:hidden}
 .tab-panel.active{display:flex;flex-direction:column}
@@ -664,7 +666,7 @@ input[type=text],input[type=number],textarea{transition:border-color .15s}
 select.sel{background:var(--surface3);color:var(--text);border:1px solid var(--border-bright);border-radius:var(--r-sm);padding:6px 10px;cursor:pointer;max-width:160px}
 select.sel:focus{outline:none;border-color:var(--gold-dim)}
 .divider{width:1px;height:28px;background:linear-gradient(180deg,transparent,var(--border-bright),transparent);flex-shrink:0}
-.nav-tabs{display:flex;gap:4px}
+.nav-tabs{display:flex;gap:4px;justify-self:center}
 .nav-tab{padding:7px 18px;border-radius:var(--r-sm);cursor:pointer;font-size:14px;border:1px solid transparent;color:var(--dim);transition:all .18s;letter-spacing:.3px}
 .nav-tab:hover{color:var(--text-muted);background:var(--surface3)}
 .nav-tab.active{color:var(--gold-bright);border-color:var(--border-g);background:linear-gradient(135deg,var(--surface3),var(--surface2));box-shadow:inset 0 1px 0 rgba(212,168,67,.15)}
@@ -1519,6 +1521,123 @@ body.fb-nonkp-room .cond-tag:hover{border-color:var(--border-bright)!important;c
 .fate-room-hint{font-size:10px;color:var(--dim);margin-left:6px;opacity:.8}
 .fate-hist-dice{display:flex;flex-direction:column;gap:2px;margin-top:4px}
 .fate-hist-die{font-size:10px;color:var(--dim);line-height:1.4;font-family:var(--font-body)}
+/* Rule selector — vertical list */
+.fate-rule-sel{display:flex;flex-direction:column;margin-bottom:10px}
+.fate-rule-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid transparent;border-radius:6px;cursor:pointer;transition:background .15s,border-color .15s;user-select:none;min-height:60px}
+.fate-rule-parent{min-height:64px}
+.fate-rule-row:hover:not(.active){background:rgba(255,255,255,.03)}
+.fate-rule-row.active{background:rgba(214,178,76,.10);border:1px solid rgba(214,178,76,.45);border-left:3px solid var(--gold)}
+/* Radio */
+.fate-rule-radio{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);flex-shrink:0;position:relative;transition:border-color .15s,background .15s}
+.fate-rule-row.active .fate-rule-radio{border-color:var(--gold);background:var(--gold)}
+.fate-rule-row.active .fate-rule-radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#fff}
+/* Content */
+.fate-rule-content{flex:1;min-width:0}
+.fate-rule-name{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px;margin-bottom:2px;line-height:1.3}
+.fate-rule-row.active .fate-rule-name{color:var(--gold)}
+.fate-rule-desc{font-size:12px;color:var(--text-muted);line-height:1.4}
+.fate-village-badge{font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,179,71,.15);color:var(--color-warning);line-height:1.6;font-family:var(--font-body);font-weight:600}
+/* Counter column — 3-zone flex: [btn][mid][btn] */
+.fate-rule-counter{width:150px;flex-shrink:0;display:flex;align-items:center}
+.fate-rc-btn{width:32px;flex-shrink:0;display:flex;justify-content:center;align-items:center}
+.fate-rc-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.fate-rule-num-wrap{display:flex;align-items:baseline;gap:3px}
+.fate-rule-num{font-family:var(--font-title);font-size:28px;font-weight:700;color:var(--text-muted);line-height:1;transition:color .15s}
+.fate-rule-row.active .fate-rule-num{color:var(--gold)}
+.fate-rule-num-unit{font-size:12px;color:var(--text-muted)}
+.fate-rule-num-hint{font-size:10px;color:var(--dim);text-align:center}
+/* Tree connecting lines */
+.fate-rule-children{display:flex;flex-direction:column;padding-left:28px;position:relative}
+.fate-rule-children::before{content:'';position:absolute;left:20px;top:0;bottom:30px;width:1px;background:rgba(214,178,76,.25);pointer-events:none}
+.fate-rule-child{position:relative}
+.fate-rule-child::before{content:'';position:absolute;left:-8px;top:50%;width:20px;height:1px;background:rgba(214,178,76,.25);transform:translateY(-50%);pointer-events:none}
+.fate-rule-locked{font-size:11px;color:var(--dim);text-align:center;padding:3px 0 7px;display:none}
+/* 天命改 adjust panel */
+.fate-adj-badge{display:inline-flex;align-items:center;font-family:var(--font-title);font-size:13px;color:var(--gold);background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.28);border-radius:8px;padding:4px 12px;letter-spacing:.3px}
+.fate-adj-status{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:8px;background:rgba(255,255,255,.03);border-radius:4px;padding:5px}
+.fate-adj-rows{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.fate-adj-row{display:flex;align-items:center;gap:6px}
+.fate-adj-key{width:42px;font-size:11px;color:var(--dim);font-weight:600;letter-spacing:.3px;flex-shrink:0}
+.fate-adj-val{flex:1;font-size:15px;font-family:var(--font-num);font-weight:700;text-align:center}
+.fate-adj-orig{font-size:10px;color:var(--dim);margin-left:3px;font-family:var(--font-body)}
+.fate-adj-arrow-up{color:#4ade80;font-size:11px}
+.fate-adj-arrow-dn{color:var(--color-danger);font-size:11px}
+.fate-adj-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+/* 天命购 buy cards */
+.fate-buy-lck{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:8px;padding:5px 12px;background:rgba(255,255,255,.03);border-radius:6px}
+.fate-buy-lck-val{font-family:var(--font-num);font-size:16px;color:var(--gold);font-weight:700;margin-left:4px}
+.fate-buy-cards{display:flex;flex-direction:column;gap:6px}
+.fate-buy-card{border:1px solid var(--border-g);border-radius:6px;padding:8px 12px;transition:border-color .15s}
+.fate-buy-card-hdr{display:flex;align-items:center;gap:8px}
+.fate-buy-total{font-family:var(--font-title);font-size:14px;color:var(--text)}
+.fate-buy-badge{font-size:10px;padding:1px 6px;border:1px solid var(--gold);border-radius:9px;color:var(--gold)}
+.fate-buy-expand-btn{margin-left:auto;font-size:10px;color:var(--dim);cursor:pointer;padding:2px 7px;border:1px solid rgba(255,255,255,.1);border-radius:3px;background:rgba(255,255,255,.03);user-select:none}
+.fate-buy-expand-btn:hover{background:rgba(255,255,255,.07)}
+.fate-buy-dice-detail{display:none;font-size:10px;color:var(--dim);margin-top:5px;line-height:1.7}
+.fate-buy-card.expanded .fate-buy-dice-detail{display:block}
+/* 天命购 alloc panel */
+.fate-alloc-rem{font-family:var(--font-num);font-size:24px;font-weight:700;text-align:center;color:var(--gold);line-height:1.1}
+.fate-alloc-rem.done{color:#4ade80}
+.fate-alloc-rem-lbl{font-size:11px;color:var(--dim);text-align:center;margin-bottom:10px}
+/* Panel shared: header, chip, back button */
+.fate-panel-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.fate-panel-chips{display:flex;align-items:center;gap:6px;flex:1;min-width:0;flex-wrap:wrap}
+.fate-panel-chip-dim{font-size:11px;color:var(--dim);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:3px 8px}
+.fate-panel-back{flex-shrink:0;font-size:11px;color:var(--text-muted);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:5px;padding:4px 9px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap;line-height:1.5}
+.fate-panel-back:hover{background:rgba(255,255,255,.09);color:var(--text)}
+/* 4×2 attribute grid */
+.fate-attr-grid-4x2{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.fate-attr-cell{position:relative;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:7px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:border-color .2s,background .2s}
+.fate-attr-cell.modified{background:rgba(214,178,76,.06);border-color:rgba(214,178,76,.3)}
+.fac-name{font-size:10px;color:var(--dim);font-weight:600;letter-spacing:.3px;line-height:1.2}
+.fac-val{font-size:20px;font-family:var(--font-num);font-weight:700;color:var(--text);line-height:1.1;cursor:pointer;min-width:32px;text-align:center;padding:0 2px;border-radius:3px;transition:color .15s}
+.fac-val.up{color:#4ade80}
+.fac-val.dn{color:var(--color-danger)}
+.fac-delta{font-size:9px;height:12px;line-height:12px;text-align:center}
+.fac-delta.up{color:#4ade80}
+.fac-delta.dn{color:var(--color-danger)}
+.fac-btns{display:flex;gap:3px;margin-top:2px}
+.fac-btn{width:28px;height:22px;border-radius:4px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .1s,opacity .1s;user-select:none;touch-action:none;line-height:1;flex-shrink:0}
+.fac-btn:hover:not([disabled]){background:rgba(255,255,255,.09)}
+.fac-btn[disabled]{opacity:.3;cursor:default}
+/* LCK readonly row */
+.fate-panel-lck{display:flex;align-items:center;justify-content:center;gap:8px;padding:5px 10px;background:rgba(255,255,255,.03);border-radius:5px;margin-bottom:8px;font-size:12px;color:var(--dim)}
+.fate-panel-lck-val{font-family:var(--font-num);font-size:16px;font-weight:700;color:var(--text-muted);margin:0 2px}
+/* Derived preview */
+.fate-derived-bar{display:flex;justify-content:space-around;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:6px;padding:6px 2px;margin-bottom:8px;gap:2px}
+.fate-derived-item{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:0}
+.fate-derived-lbl{font-size:9px;color:var(--dim);letter-spacing:.3px;font-weight:600}
+.fate-derived-val{font-size:14px;font-family:var(--font-num);font-weight:700;color:var(--text)}
+@keyframes derived-flash{0%{color:var(--gold);transform:scale(1.2)}100%{color:var(--text);transform:scale(1)}}
+.fate-derived-flash{animation:derived-flash .4s ease}
+/* Modify mode status bar */
+.fate-mod-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:6px 8px;background:rgba(255,255,255,.03);border-radius:5px}
+.fate-mod-progress{display:flex;align-items:center;gap:5px}
+.fate-mod-label{color:var(--text-muted);white-space:nowrap;font-size:12px}
+.fate-mod-dots{display:flex;gap:3px;align-items:center}
+.fate-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid rgba(214,178,76,.4);flex-shrink:0}
+.fate-dot.used{background:var(--gold);border-color:var(--gold)}
+.fate-mod-detail{color:var(--text-muted);flex:1;font-size:12px}
+.fate-mod-balance{color:var(--color-warning);font-weight:600;white-space:nowrap;font-size:12px}
+/* Buy mode status bar */
+.fate-buy-status-wrap{margin-bottom:8px}
+.fate-buy-rem-row{display:flex;align-items:baseline;gap:6px;justify-content:center;margin-bottom:4px}
+.fate-buy-rem-num{font-family:var(--font-title);font-size:30px;font-weight:700;color:var(--gold);line-height:1}
+.fate-buy-rem-num.done{color:#4ade80}
+.fate-buy-rem-lbl{font-size:12px;color:var(--text-muted)}
+.fate-alloc-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.1);margin-bottom:3px;overflow:hidden}
+.fate-alloc-bar-fill{height:100%;border-radius:2px;background:var(--gold);transition:width .15s}
+.fate-alloc-bar-fill.done{background:#4ade80}
+.fate-alloc-detail{font-size:10px;color:var(--dim);text-align:center;margin-bottom:4px}
+/* Attribute tier: mythic (≥100) */
+@keyframes mythic-shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes mythic-glow{0%,100%{filter:drop-shadow(0 0 8px rgba(255,255,255,.8)) drop-shadow(0 0 20px rgba(214,228,255,.5))}50%{filter:drop-shadow(0 0 8px rgba(255,255,255,.55)) drop-shadow(0 0 20px rgba(214,228,255,.3))}}
+.attr-tier-mythic{background:linear-gradient(90deg,#ffffff,#ffe4f2,#e0f0ff,#fff4d8,#ebe4ff,#ffffff);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:mythic-shimmer 3s ease infinite,mythic-glow 2.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.attr-tier-mythic{background:none;-webkit-text-fill-color:white;filter:drop-shadow(0 0 8px rgba(255,255,255,.8)) drop-shadow(0 0 20px rgba(214,228,255,.5));animation:none}}
+.fate-attr-cell.out-range{border-color:rgba(255,179,71,.5)!important}
+.fate-oor-badge{position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:rgba(255,179,71,.85);color:#000;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;cursor:default}
+.fate-oor-note{font-size:10px;color:rgba(255,179,71,.75);text-align:center;margin-bottom:5px}
+.fate-buy-card.guarantee{border:1px dashed rgba(214,178,76,.4)!important;background:rgba(0,0,0,.25)!important}
 /* "当前判定" indicator near skill check title */
 .kp-judge-indicator{display:none;align-items:center;gap:5px;padding:2px 8px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.28);border-radius:4px;font-size:11px;color:var(--gold);cursor:pointer;position:relative;flex-shrink:0;white-space:nowrap;margin-left:auto}
 .kp-judge-indicator.visible{display:flex}
@@ -2729,27 +2848,28 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="tb-logo">
-      <span class="tb-logo-main">TTRPG<em>_Arme</em></span>
-      <span class="tb-logo-sub">Dice Simulator</span>
+    <div class="tb-left">
+      <div class="tb-logo">
+        <span class="tb-logo-main">TTRPG<em>_Arme</em></span>
+        <span class="tb-logo-sub">Dice Simulator</span>
+      </div>
+      <button class="btn" id="btnFbToggle" title="联机侧边栏">☰</button>
+      <div class="tb-ch-ind" id="tbChIndicator">
+        <span class="tb-ch-ind-hash">#</span>
+        <span class="tb-ch-ind-name" id="tbChName">general</span>
+      </div>
+      <div class="kp-active-indicator" id="kpActiveIndicator" style="display:none"></div>
     </div>
-    <button class="btn" id="btnFbToggle" title="联机侧边栏">☰</button>
-    <div class="tb-ch-ind" id="tbChIndicator">
-      <span class="tb-ch-ind-hash">#</span>
-      <span class="tb-ch-ind-name" id="tbChName">general</span>
-    </div>
-    <div class="kp-active-indicator" id="kpActiveIndicator" style="display:none"></div>
-    <div style="flex:1"></div>
     <nav class="nav-tabs">
       <span class="nav-tab active" data-tab="dice">🎲 骰子台</span>
       <span class="nav-tab" data-tab="char">📜 角色卡</span>
       <span class="nav-tab" data-tab="history">📋 历史</span>
       <span class="nav-tab" data-tab="combat">⚔ 战斗轮</span>
     </nav>
-    <div style="flex:1"></div>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div class="tb-right">
       <span class="mode-badge coc" id="modeBadge" title="点击切换模式">COC</span>
       <div class="divider"></div>
+      <button class="btn-tertiary" id="btnSfxMute" style="width:32px;height:32px;padding:0;font-size:18px;line-height:1" title="音效：开">🔊</button>
       <button class="btn btn-secondary" id="btnExport">导出</button>
       <button class="btn btn-secondary" id="btnImport">导入</button>
       <input type="file" id="importFile" accept=".json" class="hidden">
@@ -2997,16 +3117,59 @@ details.arena-card:not([open]) .arena-clps-arr{transform:rotate(-90deg)}
     <div class="cb-modal-box" style="width:min(560px,92vw);max-height:88vh;overflow-y:auto">
       <div class="cb-modal-title">🎲 天命投掷<div class="fate-sub">COC 第七版 · 属性随机生成</div></div>
       <div id="fateOneTimeWarn" style="display:none;color:var(--color-warning);font-size:12px;margin-bottom:8px;padding:6px 10px;background:rgba(255,179,71,.07);border:1px solid rgba(255,179,71,.2);border-radius:4px;line-height:1.5">⚠ 天命为一次性投掷，本次进房仅可投掷一次，请慎重选择组数</div>
+      <div id="fateRuleSel" class="fate-rule-sel">
+        <!-- 天命 (parent) -->
+        <div class="fate-rule-row fate-rule-parent active" data-fate-mode="normal">
+          <span class="fate-rule-radio"></span>
+          <div class="fate-rule-content">
+            <div class="fate-rule-name">天命</div>
+            <div class="fate-rule-desc">投 n 组完整属性，选其一</div>
+          </div>
+          <div class="fate-rule-counter">
+            <div class="fate-rc-btn"><button class="fate-cnt-btn" id="fateCntDec">−</button></div>
+            <div class="fate-rc-mid">
+              <div class="fate-rule-num-wrap"><span class="fate-rule-num" id="fateCntNum">3</span><span class="fate-rule-num-unit">组</span></div>
+            </div>
+            <div class="fate-rc-btn"><button class="fate-cnt-btn" id="fateCntInc">+</button></div>
+          </div>
+        </div>
+        <!-- 天命购 / 天命改 (children) -->
+        <div class="fate-rule-children">
+          <div class="fate-rule-row fate-rule-child" data-fate-mode="buy">
+            <span class="fate-rule-radio"></span>
+            <div class="fate-rule-content">
+              <div class="fate-rule-name">天命购 <span class="fate-village-badge">村规</span></div>
+              <div class="fate-rule-desc">投 2 组总点数，取其一后购点分配 · 幸运单独投掷</div>
+            </div>
+            <div class="fate-rule-counter">
+              <div class="fate-rc-btn"></div>
+              <div class="fate-rc-mid">
+                <div class="fate-rule-num-wrap"><span class="fate-rule-num">2</span><span class="fate-rule-num-unit">组</span></div>
+                <div class="fate-rule-num-hint">固定</div>
+              </div>
+              <div class="fate-rc-btn"></div>
+            </div>
+          </div>
+          <div class="fate-rule-row fate-rule-child" data-fate-mode="modify">
+            <span class="fate-rule-radio"></span>
+            <div class="fate-rule-content">
+              <div class="fate-rule-name">天命改 <span class="fate-village-badge">村规</span></div>
+              <div class="fate-rule-desc">投 ⌈n/2⌉ 组，选定后 1D6 次调整，每次一项 −5 转移到另一项 +5</div>
+            </div>
+            <div class="fate-rule-counter">
+              <div class="fate-rc-btn"></div>
+              <div class="fate-rc-mid">
+                <div class="fate-rule-num-wrap"><span class="fate-rule-num" id="fateModifyNum">2</span><span class="fate-rule-num-unit">组</span></div>
+                <div class="fate-rule-num-hint">由天命推导</div>
+              </div>
+              <div class="fate-rc-btn"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="fateRuleLocked" class="fate-rule-locked"></div>
       <div id="fateCtrlZone">
-        <div class="fate-cnt-row">
-          <button class="fate-cnt-btn" id="fateCntDec">−</button>
-          <span class="fate-cnt-label" id="fateCntNum">3</span>
-          <button class="fate-cnt-btn" id="fateCntInc">+</button>
-          <span style="font-size:12px;color:var(--dim);margin-left:2px">组</span>
-        </div>
-        <div style="display:flex;justify-content:center;margin-bottom:4px">
-          <button class="btn primary btn-ripple" id="fateBtnRoll" style="padding:6px 28px">开始投掷</button>
-        </div>
+        <button class="btn primary btn-ripple" id="fateBtnRoll" style="width:100%;margin-bottom:8px">开始投掷</button>
       </div>
       <div id="fateRerollBar">
         <span class="fate-reroll-info" id="fateRollCount"></span>
@@ -3262,31 +3425,80 @@ function newChar(name='新角色',mode='COC'){
     inventory:[]};
 }
 
-/* ===== COC SKILL LIST (sorted longest-first for regex) ===== */
-const COC_SKILL_NAMES=[
-  '操作重型机械','动物驯养','精神分析','克苏鲁神话','图书馆使用',
-  '电气维修','机械维修','汽车驾驶','信用评级','计算机使用',
-  '博物学','人类学','考古学','神秘学','计算机','信用','电子学',
-  '话术','急救','历史','恐吓','跳跃','攀爬','游泳','投掷',
-  '潜行','追踪','聆听','侦查','说服','乔装','妙手','闪避',
-  '斗殴','开锁','锁匠','骑术','表演','取悦','估价','会计',
-  '手枪','步枪','霰弹枪','冲锋枪','机枪','弓箭','炮术',
-  '读唇','催眠','爆破','潜水','导航','法律','医学','生存',
-  '心理学','图书馆','汽车','重型','驾驶','母语','重型机械',
-].sort((a,b)=>b.length-a.length);
+/* ===== COC SKILL DATA ===== */
+const COC_PARSE_EXCLUDE=new Set([
+  '力量','敏捷','意志','体质','外貌','教育','体型','智力',
+  '幸运','运气','灵感','理智','体力','生命','魔法','伤害加值','体格','移动','年龄',
+  'STR','DEX','POW','CON','APP','EDU','SIZ','INT','LCK','HP','MP','SAN','DB',
+  'str','dex','pow','con','app','edu','siz','int','lck','hp','mp','san','db',
+]);
+
+const COC_FLAT_SKILLS={
+  '会计':5,'人类学':1,'估价':5,'考古学':1,'取悦':15,'攀爬':20,
+  '计算机使用':5,'信用':0,'克苏鲁神话':0,'乔装':5,'闪避':0,
+  '电气维修':10,'电子学':1,'话术':5,'急救':30,'历史':5,'恐吓':15,
+  '跳跃':20,'法律':5,'图书馆':20,'聆听':20,'锁匠':1,'机械维修':10,
+  '医学':1,'自然学':10,'导航':10,'神秘学':5,'操作重型机械':1,
+  '说服':10,'精神分析':1,'心理学':10,'骑术':5,'妙手':10,'侦查':25,
+  '潜行':20,'游泳':20,'投掷':20,'追踪':10,'动物驯养':5,
+  '潜水':1,'爆破':1,'读唇':1,'催眠':1,'炮术':1,'母语':0,
+  '生存':10,'科学':1,'技艺':5,'外语':1,
+};
+
+const COC_PARENT_SKILLS={
+  '格斗':{defaultSub:'斗殴',subs:{'斗殴':25,'斧':15,'链锯':10,'绞索':15,'连枷':10,'剑':20,'矛':20,'鞭':5}},
+  '射击':{defaultSub:'手枪',subs:{'手枪':20,'步枪/霰弹枪':25,'弓':15,'冲锋枪':15,'机枪':10,'火焰喷射器':10,'重武器':10}},
+  '驾驶':{defaultSub:'汽车',subs:{'汽车':20}},
+  '操纵':{defaultSub:null,subs:{'飞行器':1,'船':1}},
+  '科学':{defaultSub:null,subs:{'天文学':1,'生物学':1,'植物学':1,'化学':1,'密码学':1,'工程学':1,'司法科学':1,'地质学':1,'数学':10,'气象学':1,'药学':1,'物理学':1,'动物学':1}},
+  '技艺':{defaultSub:null,subs:{'表演':5,'美术':5,'绘画':5,'摄影':5,'伪造':5,'书法':5,'木匠':5,'厨艺':5,'烹饪':5,'舞蹈':5,'歌唱':5,'乐器':5,'演奏':5,'写作':5,'文学':5,'雕塑':5,'技术制图':5,'理发':5,'裁缝':5,'鞋匠':5,'陶艺':5,'花艺':5,'园艺':5,'编织':5,'刺绣':5,'皮革':5,'金工':5,'珠宝':5,'钢琴':5,'小提琴':5,'吉他':5,'化妆':5,'调酒':5}},
+  '外语':{defaultSub:null,subs:{}},
+};
+
+const COC_PARSE_ALIASES={
+  '克苏鲁':'克苏鲁神话','计算机':'计算机使用','开锁':'锁匠',
+  '重型':'操作重型机械','重型机械':'操作重型机械',
+  '汽车驾驶':'驾驶：汽车','汽车':'驾驶：汽车',
+  '步枪':'射击：步枪/霰弹枪','霰弹枪':'射击：步枪/霰弹枪','弓箭':'射击：弓',
+  '博物学':'自然学','图书馆使用':'图书馆','信用评级':'信用',
+  '信誉':'信用','电器维修':'电气维修',
+  '艺术与手艺':'技艺','其他语言':'外语','火器':'射击：手枪',
+};
+
+const COC_SUB_REVERSE=(()=>{
+  const r={};
+  for(const[par,info]of Object.entries(COC_PARENT_SKILLS)){
+    for(const[sub,base]of Object.entries(info.subs)){if(!r[sub])r[sub]={par,base};}
+  }
+  return r;
+})();
+
+const COC_SUFFIX_CANDIDATES=[...new Set([
+  ...[...COC_PARSE_EXCLUDE],
+  ...Object.keys(COC_FLAT_SKILLS),
+  ...Object.keys(COC_PARSE_ALIASES),
+  ...Object.keys(COC_SUB_REVERSE),
+  ...Object.keys(COC_PARENT_SKILLS),
+])].sort((a,b)=>b.length-a.length);
 
 /* ===== COC SKILL DEFAULT VALUES ===== */
 const COC_SKILL_DEFAULTS={
+  // Flat skills
   '会计':5,'人类学':1,'估价':5,'考古学':1,'取悦':15,'攀爬':20,
-  '计算机':5,'信用':0,'克苏鲁神话':0,'克苏鲁':0,'乔装':5,'闪避':0,
-  '汽车':20,'驾驶':20,'汽车驾驶':20,'电气维修':10,'电子学':1,
-  '话术':5,'斗殴':25,'手枪':20,'急救':30,'历史':5,'恐吓':15,
-  '跳跃':20,'母语':0,'法律':5,'图书馆':20,'聆听':20,
-  '开锁':1,'锁匠':1,'机械维修':10,'医学':1,'博物学':10,
-  '导航':10,'神秘学':5,'操作重型机械':1,'重型':1,'说服':10,
-  '精神分析':1,'心理学':10,'骑术':5,'妙手':10,'侦查':25,
-  '潜行':20,'生存':10,'游泳':20,'投掷':20,'追踪':10,
-  '动物驯养':5,'潜水':1,'爆破':1,'读唇':1,'催眠':1,'炮术':1,
+  '计算机使用':5,'信用':0,'克苏鲁神话':0,'乔装':5,'闪避':0,
+  '电气维修':10,'电子学':1,'话术':5,'急救':30,'历史':5,'恐吓':15,
+  '跳跃':20,'法律':5,'图书馆':20,'聆听':20,'锁匠':1,'机械维修':10,
+  '医学':1,'自然学':10,'导航':10,'神秘学':5,'操作重型机械':1,
+  '说服':10,'精神分析':1,'心理学':10,'骑术':5,'妙手':10,'侦查':25,
+  '潜行':20,'游泳':20,'投掷':20,'追踪':10,'动物驯养':5,
+  '潜水':1,'爆破':1,'读唇':1,'催眠':1,'炮术':1,'母语':0,'生存':10,
+  // Sub-skill canonical names
+  '格斗：斗殴':25,'格斗：斧':15,'格斗：链锯':10,'格斗：绞索':15,'格斗：连枷':10,'格斗：剑':20,'格斗：矛':20,'格斗：鞭':5,
+  '射击：手枪':20,'射击：步枪/霰弹枪':25,'射击：弓':15,'射击：冲锋枪':15,'射击：机枪':10,'射击：火焰喷射器':10,'射击：重武器':10,
+  '驾驶：汽车':20,'操纵：飞行器':1,'操纵：船':1,
+  // Backward compat (old names may still appear in saved characters)
+  '斗殴':25,'手枪':20,'汽车':20,'驾驶':20,'汽车驾驶':20,
+  '博物学':10,'开锁':1,'重型':1,'克苏鲁':0,'计算机':5,'步枪':25,'霰弹枪':25,
 };
 
 /* ===== PARSER ===== */
@@ -3320,7 +3532,7 @@ function parseChar(text,mode){
     const mm=text.match(/克苏鲁(?:神话)?\s*[:：=\s]?\s*(\d+)/);
     if(mm)res.cthulhuMythos=parseInt(mm[1]);
     // Skills
-    res._skills=parseCOCSkills(text);
+    const _sk=parseCOCSkills(text);res._skills=_sk.skills;res._skillNotes=_sk.notes;
   }else{
     const MAP={
       STR:['str','力量'],DEX:['dex','敏捷'],CON:['con','体质'],
@@ -3345,20 +3557,70 @@ function parseChar(text,mode){
 }
 
 function parseCOCSkills(text){
-  const pat=new RegExp(
-    '('+COC_SKILL_NAMES.map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')'+'(\\d+)',
-    'g'
-  );
-  const skills=[],seen=new Set();
+  const regex=/([^\d\s]+?)\s*[：:]?\s*(\d{1,3})(?:\s*\/\s*\d{1,3}){0,2}(?!\d)/g;
+  const notes=[],resolvedArr=[];
   let m;
-  while((m=pat.exec(text))!==null){
-    const name=m[1],val=parseInt(m[2]);
-    if(!seen.has(name)){
-      seen.add(name);
-      skills.push({id:uid(),name,base:val,prof:0,interest:0});
-    }
+  while((m=regex.exec(text))!==null){
+    const raw=m[1].trim(),val=parseInt(m[2]);
+    if(!raw)continue;
+    const r=_cocResolveToken(raw,val,notes);
+    if(r)resolvedArr.push(r);
   }
-  return skills;
+  const nameMap=new Map();
+  for(const{name,val}of resolvedArr){
+    if(nameMap.has(name)){const e=nameMap.get(name);e.val=Math.max(e.val,val);e.count++;}
+    else nameMap.set(name,{val,count:1});
+  }
+  const merges=[];
+  for(const[name,{count}]of nameMap){if(count>1)merges.push(`${name}（${count}条）`);}
+  if(merges.length)notes.push('合并重复：'+merges.join('、'));
+  const skills=[];
+  for(const[name,{val}]of nameMap)skills.push({id:uid(),name,base:val,prof:0,interest:0});
+  return{skills,notes};
+}
+
+function _cocResolveToken(raw,val,notes){
+  if(COC_PARSE_EXCLUDE.has(raw)||COC_PARSE_EXCLUDE.has(raw.toUpperCase()))return null;
+  if(COC_PARSE_ALIASES[raw])return{name:COC_PARSE_ALIASES[raw],val};
+  if(raw in COC_FLAT_SKILLS)return{name:raw,val};
+  const parInfo=COC_PARENT_SKILLS[raw];
+  if(parInfo)return parInfo.defaultSub?{name:`${raw}：${parInfo.defaultSub}`,val}:{name:raw,val};
+  const expl=_cocParseExplicit(raw);
+  if(expl)return{name:expl,val};
+  const rev=COC_SUB_REVERSE[raw];
+  if(rev)return{name:`${rev.par}：${raw}`,val};
+  if((raw.endsWith('语')||raw.endsWith('文'))&&raw!=='母语'){
+    notes.push('识别为外语：'+raw);
+    return{name:'外语：'+raw,val};
+  }
+  for(const cand of COC_SUFFIX_CANDIDATES){
+    if(cand.length>=raw.length)continue;
+    if(!raw.endsWith(cand))continue;
+    const r=_cocResolveToken(cand,val,[]);
+    if(r===null){notes.push(`按后缀识别：${raw}→${cand}（排除）`);return null;}
+    notes.push(`按后缀识别：${raw}→${cand}`);
+    return r;
+  }
+  return{name:raw,val};
+}
+
+function _cocParseExplicit(raw){
+  let m=raw.match(/^(.+?)[：:：](.+)$/);
+  if(m){const r=_cocResolvePairSub(m[1],m[2])||_cocResolvePairSub(m[2],m[1]);if(r)return r;}
+  m=raw.match(/^(.+?)[（(](.+?)[）)]$/);
+  if(m){const r=_cocResolvePairSub(m[1],m[2])||_cocResolvePairSub(m[2],m[1]);if(r)return r;}
+  m=raw.match(/^(.+?)-(.+)$/);
+  if(m){const r=_cocResolvePairSub(m[1],m[2]);if(r)return r;}
+  return null;
+}
+
+function _cocResolvePairSub(a,b){
+  const parName=COC_PARSE_ALIASES[a]||a;
+  const parInfo=COC_PARENT_SKILLS[parName];
+  if(!parInfo)return null;
+  if(b in parInfo.subs)return`${parName}：${b}`;
+  if(parName==='技艺'||parName==='外语')return`${parName}：${b}`;
+  return null;
 }
 
 /* ===== DICE SYSTEM ===== */
@@ -3437,6 +3699,13 @@ function cocExtras(c){
   const dodge=Math.max(dexDodge,dodgeSkVal);
   return{db,build,dodge};
 }
+function attrTier(v){
+  if(v>=95)return{cls:'attr-tier-mythic',style:''};
+  if(v>=80)return{cls:'',style:'color:var(--gold-bright)'};
+  if(v>=70)return{cls:'',style:'color:#c084fc'};
+  if(v<=35)return{cls:'',style:'color:var(--color-danger)'};
+  return{cls:'',style:''};
+}
 const dndMod=s=>fl((s-10)/2);
 const dndProf=lv=>fl((lv-1)/4)+2;
 const mStr=m=>(m>=0?'+':'')+m;
@@ -3463,10 +3732,8 @@ function genCOCPanel(char){
   const ATTRS=[['STR','力量'],['DEX','敏捷'],['CON','体质'],['SIZ','体型'],['APP','外貌'],['INT','智力'],['POW','意志'],['EDU','教育'],['LCK','幸运']];
   const ex=cocExtras(c);
   const cond=c.conditions||{};
-  const attrClr=v=>v>=85?'style="color:var(--gold-bright)"':v>=70?'style="color:#c084fc"':'';
-
   // Attribute grid v2
-  const attrsHtml=ATTRS.map(([k])=>`<div class="cp-attr2"><div class="cp-attr2-n">${k}</div><div class="cp-attr2-v" ${attrClr(c[k]??0)}>${c[k]??0}</div></div>`).join('');
+  const attrsHtml=ATTRS.map(([k])=>{const{cls,style}=attrTier(c[k]??0);return`<div class="cp-attr2"><div class="cp-attr2-n">${k}</div><div class="cp-attr2-v${cls?' '+cls:''}"${style?` style="${style}"`:''} >${c[k]??0}</div></div>`;}).join('');
 
   // Skill categorization
   const skills=c.skills||[];
@@ -4231,8 +4498,13 @@ function showCOCCheckResult(res,container){
 /* ===== SFX (Web Audio API — no external files) ===== */
 const SFX={
   _ctx:null,
+  _muted:(localStorage.getItem('ttrpg_sfx_muted')==='1'),
+  get muted(){return this._muted;},
+  set muted(v){this._muted=!!v;localStorage.setItem('ttrpg_sfx_muted',v?'1':'0');},
   ctx(){
+    if(this._muted)return null;
     if(!this._ctx){try{this._ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+    if(this._ctx&&this._ctx.state==='suspended')this._ctx.resume();
     return this._ctx;
   },
   _osc(f1,f2,dur,vol,type='sine'){
@@ -4265,10 +4537,56 @@ const SFX={
     src.start(t);src.stop(t+dur);
   },
   // Button sound variants
-  tick(){this._osc(1400,900,0.045,0.07);},
+  tick(val){
+    if(val!==undefined){const f=Math.max(1600,Math.min(2400,1600+(val-5)*(800/145)));this._osc(f,f,0.030,0.10);}
+    else{this._osc(1400,900,0.045,0.07);}
+  },
   click(){this._osc(900,500,0.06,0.11);},
   primary(){this._osc(600,1000,0.07,0.13);setTimeout(()=>this._osc(1000,800,0.08,0.09),55);},
   danger(){this._osc(180,90,0.18,0.18,'sawtooth');},
+  // Bell chord: attr reaches ≥95
+  ascend(){
+    const c=this.ctx();if(!c)return;
+    const t=c.currentTime;
+    const gDown=Math.pow(2,25/1200);
+    [[1,0.052],[2,0.026],[2.76,0.016],[5.4,0.0063]].forEach(([r,a])=>{
+      const o=c.createOscillator(),gn=c.createGain();o.connect(gn);gn.connect(c.destination);o.type='sine';
+      const f=880*r;
+      if(r===1){o.frequency.setValueAtTime(f*gDown,t);o.frequency.exponentialRampToValueAtTime(f,t+0.06);}
+      else o.frequency.value=f;
+      gn.gain.setValueAtTime(0.001,t);gn.gain.linearRampToValueAtTime(a,t+0.015);gn.gain.exponentialRampToValueAtTime(0.0001,t+1.1);
+      o.start(t);o.stop(t+1.2);
+    });
+    [-0.6,0.6].forEach((pan,i)=>{
+      const cents=i===0?-3:3;
+      const o=c.createOscillator(),pn=c.createStereoPanner(),gn=c.createGain();
+      o.connect(pn);pn.connect(gn);gn.connect(c.destination);o.type='sine';pn.pan.value=pan;
+      const f=880*Math.pow(2,cents/1200);
+      o.frequency.setValueAtTime(f*gDown,t);o.frequency.exponentialRampToValueAtTime(f,t+0.06);
+      gn.gain.setValueAtTime(0.001,t);gn.gain.linearRampToValueAtTime(0.010,t+0.015);gn.gain.exponentialRampToValueAtTime(0.0001,t+1.1);
+      o.start(t);o.stop(t+1.2);
+    });
+    const bLen=Math.ceil(c.sampleRate*0.35),nb=c.createBuffer(1,bLen,c.sampleRate),nd=nb.getChannelData(0);
+    for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+    const ns=c.createBufferSource();ns.buffer=nb;
+    const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=9000;
+    const ng=c.createGain();ng.gain.setValueAtTime(0.001,t);ng.gain.linearRampToValueAtTime(0.020,t+0.005);ng.gain.exponentialRampToValueAtTime(0.0001,t+0.32);
+    ns.connect(hp);hp.connect(ng);ng.connect(c.destination);ns.start(t);ns.stop(t+0.35);
+  },
+  // Two-note descending alert: attr goes out of normal range
+  fateAlert(){
+    const c=this.ctx();if(!c)return;
+    const t=c.currentTime;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;lp.connect(c.destination);
+    [[659,0],[554,0.22]].forEach(([f,delay])=>{
+      const o=c.createOscillator(),gn=c.createGain();o.type='triangle';o.frequency.value=f;
+      gn.gain.setValueAtTime(0.001,t+delay);gn.gain.linearRampToValueAtTime(0.15,t+delay+0.008);gn.gain.exponentialRampToValueAtTime(0.0001,t+delay+0.22);
+      o.connect(gn);gn.connect(lp);o.start(t+delay);o.stop(t+delay+0.25);
+    });
+    const oL=c.createOscillator(),gL=c.createGain();oL.type='sine';oL.frequency.value=110;
+    gL.gain.setValueAtTime(0.001,t);gL.gain.linearRampToValueAtTime(0.09,t+0.02);gL.gain.exponentialRampToValueAtTime(0.0001,t+0.26);
+    oL.connect(gL);gL.connect(c.destination);oL.start(t);oL.stop(t+0.3);
+  },
   // Dice roll: noise burst + soft resolution ping
   roll(){
     this._noise(0.32,0.16,1800);
@@ -4298,6 +4616,7 @@ const SFX={
 // Global click sound dispatcher
 document.addEventListener('click',e=>{
   const t=e.target;
+  if(t.closest('#fateModal'))return;
   const btn=t.closest('.btn,.roll-btn,.nav-tab,.die-shape,.dcb,.cp-adj,.mode-badge,.ca-counter-toggle,.cond-tag,.ca-mult-opt,.wcard-pen-toggle,.ca-ds,.prof-dot');
   if(!btn)return;
   if(btn.classList.contains('roll-btn'))return; // SFX.roll() called inside event handler
@@ -4311,6 +4630,34 @@ document.addEventListener('click',e=>{
     SFX.tick();
   }else{SFX.tick();}
 },true);
+
+// Fate modal SFX: state-transition check (alert takes priority over ascend)
+function _fateSfxCheck(prevG,g,isOOR){
+  const ATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU'];
+  let hasAscend=false,hasAlert=false;
+  ATTRS.forEach(k=>{
+    const prev=prevG[k]??g[k],cur=g[k];
+    if(cur>=95&&prev<95)hasAscend=true;
+    if(isOOR(k,cur)&&!isOOR(k,prev))hasAlert=true;
+  });
+  if(hasAlert)SFX.fateAlert();
+  else if(hasAscend)SFX.ascend();
+}
+// Fate modal: pointerdown delegate — covers buttons not reached by global click dispatcher
+document.getElementById('fateModal').addEventListener('pointerdown',e=>{
+  const btn=e.target.closest('button,.fate-rule-row,.fate-buy-card');
+  if(!btn||btn.disabled)return;
+  if(btn.id==='fateSfxToggle')return;
+  if(btn.classList.contains('btn')){
+    if(btn.classList.contains('danger'))SFX.danger();
+    else if(btn.classList.contains('primary'))SFX.primary();
+    else SFX.click();
+  }else{SFX.click();}
+},{capture:true});
+// Mute toggle
+function _sfxMuteSync(){const el=document.getElementById('btnSfxMute');if(!el)return;el.textContent=SFX.muted?'🔇':'🔊';el.title=SFX.muted?'音效：关':'音效：开';el.style.color=SFX.muted?'var(--text-disabled)':'';}
+document.getElementById('btnSfxMute')?.addEventListener('click',()=>{SFX.muted=!SFX.muted;_sfxMuteSync();});
+_sfxMuteSync();
 
 /* ===== HISTORY COLLAPSE STATE ===== */
 const histCollapsed={};
@@ -4485,6 +4832,7 @@ const App={
         c.coc.MP={cur:dv.mpMax,max:dv.mpMax};
         c.coc.SAN={cur:p._SAN!=null?p._SAN:c.coc.POW,max:dv.sanMax};
         if(p._skills&&p._skills.length){c.coc.skills=p._skills;}
+        if(p._skillNotes?.length){S.pushHist({ts:Date.now(),label:`技能导入 ${p._skills.length}条`,dice:p._skillNotes,total:p._skills.length,charId:c.id,charName:c.name});}
       }else{
         const attrs=['STR','DEX','CON','INT','WIS','CHA'];
         attrs.forEach(k=>{if(p[k]!=null)c.dnd[k]=p[k];});
@@ -4977,40 +5325,56 @@ const App={
   },
   _fateGroups:[],
   _fateSelected:false,
+  _fateMode:'normal',
+  _fateModifyCount:0,
+  _fateLCK:0,
+  _fateBuyDice:[],
+  _fateBuyGuaranteeTotal:0,
+  _fateBuyCntN:3,
 
   openFateModal(char){
-    this._fateGroups=[];this._fateSelected=false;
+    this._fateGroups=[];this._fateSelected=false;this._fateMode='normal';this._fateBuyGuaranteeTotal=0;this._fateBuyCntN=3;
     document.getElementById('fateCntNum').textContent='3';
     document.getElementById('fateResults').innerHTML='';
     document.getElementById('fateCtrlZone').style.display='';
+    document.getElementById('fateRuleSel').style.display='';
+    document.getElementById('fateRuleLocked').style.display='none';
     document.getElementById('fateRerollBar').style.display='none';
     document.getElementById('fateOneTimeWarn').style.display=(FB.roomId&&!FB.isKP)?'':'none';
     document.getElementById('fateModal').classList.add('show');
-    document.getElementById('fateCntDec').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v>3)document.getElementById('fateCntNum').textContent=v-1;};
-    document.getElementById('fateCntInc').onclick=()=>{const v=parseInt(document.getElementById('fateCntNum').textContent)||3;if(v<10)document.getElementById('fateCntNum').textContent=v+1;};
+    // Rule selector: reset active state
+    document.querySelectorAll('.fate-rule-row').forEach(c=>{
+      c.classList.toggle('active',c.dataset.fateMode==='normal');
+      c.onclick=()=>{
+        document.querySelectorAll('.fate-rule-row').forEach(x=>x.classList.remove('active'));
+        c.classList.add('active');
+        this._fateMode=c.dataset.fateMode;
+        this._updateFateModeArea();
+      };
+    });
+    // Stop stepper clicks from propagating to the row click handler
+    document.getElementById('fateCntDec').onclick=(e)=>{e.stopPropagation();this._updateFateStepper(-1);};
+    document.getElementById('fateCntInc').onclick=(e)=>{e.stopPropagation();this._updateFateStepper(1);};
     document.getElementById('fateBtnRoll').onclick=()=>this._doFateRoll(char);
     document.getElementById('fateBtnClose').onclick=()=>document.getElementById('fateModal').classList.remove('show');
     document.getElementById('fateModal').onclick=e=>{if(e.target.id==='fateModal')document.getElementById('fateModal').classList.remove('show');};
+    this._updateFateModeArea();
   },
 
   _doFateRoll(char){
+    if(this._fateMode==='buy'){this._doFateBuyRoll(char);return;}
+    if(this._fateMode==='modify'){this._doFateModifyRoll(char);return;}
     const n=Math.min(10,Math.max(3,parseInt(document.getElementById('fateCntNum').textContent)||3));
     this._fateGroups=Array.from({length:n},()=>this._rollFateGroup());
     this._fateSelected=false;
-    // Mark as used for this session (in room, non-KP only)
     if(FB.roomId&&!FB.isKP)FB._fateUsedThisSession=true;
-    // Switch UI: hide controls, show re-roll bar only outside room or for KP
     const _canReroll=!FB.roomId||FB.isKP;
+    this._lockFateRuleArea('天命',`${n} 组`);
     document.getElementById('fateCtrlZone').style.display='none';
     document.getElementById('fateRollCount').textContent=`已投掷 ${n} 组`;
     if(_canReroll){
       document.getElementById('fateRerollBar').style.display='flex';
-      document.getElementById('fateBtnReroll').onclick=()=>{
-        document.getElementById('fateCtrlZone').style.display='';
-        document.getElementById('fateRerollBar').style.display='none';
-        document.getElementById('fateResults').innerHTML='';
-        this._fateGroups=[];this._fateSelected=false;
-      };
+      document.getElementById('fateBtnReroll').onclick=()=>this._resetFateModal();
     }
     S.pushHist({
       ts:Date.now(),label:'天命投掷',
@@ -5018,14 +5382,7 @@ const App={
       total:0,charId:char.id,charName:char.name,
     });
     this._renderFateGroups(char);
-    this._fateRunAnalysis(); // async, non-blocking
-  },
-
-  _fateAttrColor(v){
-    if(v>=85)return'var(--gold-bright)';
-    if(v>=70)return'#c084fc';
-    if(v<=35)return'var(--color-danger)';
-    return'';
+    this._fateRunAnalysis();
   },
 
   _fateStrengthAnalysis(g){
@@ -5125,6 +5482,450 @@ const App={
     await Promise.all([worker(),worker()]);
   },
 
+  /* ---- MODE AREA HELPERS ---- */
+  _updateFateStepper(delta){
+    const v=parseInt(document.getElementById('fateCntNum').textContent)||3;
+    const nv=Math.min(10,Math.max(3,v+delta));
+    document.getElementById('fateCntNum').textContent=nv;
+    this._updateFateModeArea();
+  },
+
+  _updateFateModeArea(){
+    const n=parseInt(document.getElementById('fateCntNum').textContent)||3;
+    const modifyNum=document.getElementById('fateModifyNum');
+    if(modifyNum)modifyNum.textContent=Math.ceil(n/2);
+  },
+
+  _lockFateRuleArea(modeName,detail){
+    const sel=document.getElementById('fateRuleSel');
+    const locked=document.getElementById('fateRuleLocked');
+    if(sel)sel.style.display='none';
+    if(locked){locked.textContent=`已投掷 · ${modeName} · ${detail}`;locked.style.display='block';}
+  },
+
+  _resetFateModal(){
+    this._fateGroups=[];this._fateSelected=false;
+    this._fateMode='normal';
+    document.querySelectorAll('.fate-rule-row').forEach(r=>r.classList.toggle('active',r.dataset.fateMode==='normal'));
+    document.getElementById('fateCtrlZone').style.display='';
+    document.getElementById('fateRuleSel').style.display='';
+    document.getElementById('fateRuleLocked').style.display='none';
+    document.getElementById('fateRerollBar').style.display='none';
+    document.getElementById('fateResults').innerHTML='';
+    this._updateFateModeArea();
+  },
+
+  /* ---- 天命改 FLOW ---- */
+  _doFateModifyRoll(char){
+    const n=Math.min(10,Math.max(3,parseInt(document.getElementById('fateCntNum').textContent)||3));
+    const actualN=Math.ceil(n/2);
+    this._fateModifyCount=Math.ceil(Math.random()*6);
+    this._fateGroups=Array.from({length:actualN},()=>this._rollFateGroup());
+    this._fateSelected=false;
+    if(FB.roomId&&!FB.isKP)FB._fateUsedThisSession=true;
+    const _canReroll=!FB.roomId||FB.isKP;
+    this._lockFateRuleArea('天命改',`${actualN} 组 · 调整次数 ${this._fateModifyCount}`);
+    document.getElementById('fateCtrlZone').style.display='none';
+    document.getElementById('fateRollCount').textContent=`已投掷 ${actualN} 组`;
+    if(_canReroll){
+      document.getElementById('fateRerollBar').style.display='flex';
+      document.getElementById('fateBtnReroll').onclick=()=>this._resetFateModal();
+    }
+    S.pushHist({ts:Date.now(),label:'天命改投掷',
+      dice:[`调整次数 1D6 = ${this._fateModifyCount}`,...this._fateGroups.map((g,i)=>`第${i+1}组: STR${g.STR} CON${g.CON} SIZ${g.SIZ} DEX${g.DEX} APP${g.APP} INT${g.INT} POW${g.POW} EDU${g.EDU} LCK${g.LCK} ｜总${this._fateTotal(g)}`)],
+      total:0,charId:char.id,charName:char.name});
+    this._renderFateModifyGroups(char);
+    this._fateRunAnalysis();
+  },
+
+  _renderFateModifyGroups(char){
+    const el=document.getElementById('fateResults');if(!el)return;
+    const totals=this._fateGroups.map(g=>this._fateTotal(g));
+    const maxTotal=Math.max(...totals);
+    const inRoom=!!FB.roomId;
+    const badgeHtml=`<div style="text-align:center;margin-bottom:10px"><span class="fate-adj-badge">本次可调整次数：${this._fateModifyCount}</span></div>`;
+    const attrs=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'];
+    const cardsHtml=this._fateGroups.map((g,i)=>{
+      const t=totals[i],noLck=t-g.LCK;
+      const bestBadge=t===maxTotal?`<span class="fate-badge-best">最高</span>`:'';
+      const noLckHtml=`<span class="fate-total-nolck">｜ 除LCK ${noLck}</span>`;
+      const attrsHtml=attrs.map(k=>{const{cls,style}=attrTier(g[k]);return`<span class="fate-attr-item"><span class="fate-attr-name">${k}</span><span class="fate-attr-val${cls?' '+cls:''}"${style?` style="${style}"`:''} >${g[k]}</span></span>`;}).join('');
+      const btnHtml=`<button class="btn primary fate-select-btn" data-fmod-select="${i}">选定此组</button>`;
+      const aiInitHtml=this._fateInitAiZone(g);
+      return`<div class="fate-group-card" data-fate-idx="${i}" style="animation-delay:${i*80}ms">
+        <div class="fate-group-hdr"><span class="fate-group-lbl">第${i+1}组</span>${bestBadge}<span class="fate-group-total">总点数 ${t}${noLckHtml}</span>${btnHtml}</div>
+        <div class="fate-attr-row">${attrsHtml}</div>
+        <div class="fate-analysis"><div class="fate-ai-zone">${aiInitHtml}</div></div>
+      </div>`;
+    }).join('');
+    el.innerHTML=badgeHtml+cardsHtml;
+    el.querySelectorAll('[data-fmod-select]').forEach(btn=>{
+      btn.addEventListener('click',()=>this._openFateModifyPanel(char,parseInt(btn.dataset.fmodSelect)));
+    });
+  },
+
+  _openFateModifyPanel(char,idx){
+    const HARD_MIN=5;
+    const HARD_MAX={STR:150,CON:150,SIZ:Infinity,DEX:150,APP:150,INT:150,POW:Infinity,EDU:150};
+    const NORM_FLOOR={STR:15,CON:15,SIZ:40,DEX:15,APP:15,INT:40,POW:15,EDU:40};
+    const NORM_CAP={STR:99,CON:99,SIZ:Infinity,DEX:99,APP:99,INT:99,POW:Infinity,EDU:99};
+    const isOOR=(k,v)=>v<NORM_FLOOR[k]||v>NORM_CAP[k];
+    const origG={...this._fateGroups[idx]};
+    const g={...origG};
+    const maxMoves=this._fateModifyCount;
+    const ATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU'];
+    const getStats=()=>{
+      let inc=0,dec=0;
+      ATTRS.forEach(k=>{const d=(g[k]-origG[k])/5;if(d>0)inc+=d;else if(d<0)dec-=d;});
+      return{increased:inc,decreased:dec,used:Math.max(inc,dec),balanced:inc===dec};
+    };
+    const getDerived=()=>{
+      const hp=Math.floor((g.CON+g.SIZ)/10),mp=Math.floor(g.POW/5),san=g.POW;
+      const s=g.STR+g.SIZ;let db,build;
+      if(s<=64){db='-2';build=-2;}else if(s<=84){db='-1';build=-1;}else if(s<=124){db='0';build=0;}else if(s<=164){db='+1D4';build=1;}else if(s<=204){db='+1D6';build=2;}else if(s<=284){db='+2D6';build=3;}else if(s<=364){db='+3D6';build=4;}else{db='+4D6';build=5;}
+      return{hp,mp,san,db,build};
+    };
+    let prevDer=null;
+    const render=()=>{
+      const el=document.getElementById('fateResults');if(!el)return;
+      const{increased,decreased,used,balanced}=getStats();
+      const d=getDerived();
+      const dbFl=prevDer&&prevDer.db!==d.db,buFl=prevDer&&prevDer.build!==d.build;
+      prevDer={...d};
+      const hdr=`<div class="fate-panel-hdr"><div class="fate-panel-chips"><span class="fate-adj-badge">天命改 · 第${idx+1}组</span><span class="fate-panel-chip-dim">调整次数 ${maxMoves}</span></div><button class="fate-panel-back" id="fatePanelBack">← 重选组</button></div>`;
+      const dots=Array.from({length:maxMoves},(_,i)=>`<span class="fate-dot${i<used?' used':''}"></span>`).join('');
+      const imb=increased-decreased;
+      const balHtml=!balanced?`<span class="fate-mod-balance">待平衡 ${imb>0?'+':''}${imb*5}</span>`:'';
+      const status=`<div class="fate-mod-status"><div class="fate-mod-progress"><span class="fate-mod-label">调整 ${used} / ${maxMoves}</span><div class="fate-mod-dots">${dots}</div></div><span class="fate-mod-detail">已减 ${decreased*5} · 已加 ${increased*5}</span>${balHtml}</div>`;
+      const oorCount=ATTRS.filter(k=>isOOR(k,g[k])).length;
+      const cells=ATTRS.map(k=>{
+        const delta=(g[k]-origG[k])/5;
+        const dStr=delta>0?`↑+${delta*5}`:delta<0?`↓−${Math.abs(delta)*5}`:'';
+        const dCls=delta>0?' up':delta<0?' dn':'';
+        const oor=isOOR(k,g[k]);
+        const{cls,style}=attrTier(g[k]);
+        const canP=delta<0?(HARD_MAX[k]===Infinity||g[k]+5<=HARD_MAX[k]):(increased+1<=maxMoves&&(HARD_MAX[k]===Infinity||g[k]+5<=HARD_MAX[k]));
+        const canM=delta>0?(g[k]-5>=HARD_MIN):(decreased+1<=maxMoves&&g[k]-5>=HARD_MIN);
+        const oorBadge=oor?'<span class="fate-oor-badge" title="超出常规范围，需与 KP 协商">!</span>':'';
+        return`<div class="fate-attr-cell${delta!==0?' modified':''}${oor?' out-range':''}">${oorBadge}<div class="fac-name">${k}</div><div class="fac-val${cls?' '+cls:''}"${style?` style="${style}"`:''} >${g[k]}</div><div class="fac-delta${dCls}">${dStr}</div><div class="fac-btns"><button class="fac-btn" data-fac-minus="${k}"${canM?'':' disabled'}>−</button><button class="fac-btn" data-fac-plus="${k}"${canP?'':' disabled'}>+</button></div></div>`;
+      }).join('');
+      const lck=`<div class="fate-panel-lck"><span class="fac-name">LCK</span><span class="fate-panel-lck-val">${origG.LCK}</span><span style="font-size:10px">只读</span></div>`;
+      const bld=d.build>=0?'+'+d.build:String(d.build);
+      const derived=`<div class="fate-derived-bar"><div class="fate-derived-item"><div class="fate-derived-lbl">HP</div><div class="fate-derived-val">${d.hp}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">MP</div><div class="fate-derived-val">${d.mp}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">SAN</div><div class="fate-derived-val">${d.san}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">DB</div><div class="fate-derived-val${dbFl?' fate-derived-flash':''}">${d.db}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">体格</div><div class="fate-derived-val${buFl?' fate-derived-flash':''}">${bld}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">幸运</div><div class="fate-derived-val">${origG.LCK}</div></div></div>`;
+      const canConfirm=balanced&&!!FB.roomId;
+      const oorNote=oorCount?`<div class="fate-oor-note">含 ${oorCount} 项特殊属性</div>`:'';
+      const actions=`${oorNote}<div class="fate-adj-actions"><button class="btn-tertiary" id="fatePanelReset">重置</button><button class="btn primary" id="fatePanelConfirm"${canConfirm?'':' disabled'}>确认属性 ▶</button></div>`;
+      el.innerHTML=hdr+status+`<div class="fate-attr-grid-4x2">${cells}</div>`+lck+derived+actions;
+      el.querySelector('#fatePanelBack')?.addEventListener('click',()=>this._renderFateModifyGroups(char));
+      el.querySelectorAll('[data-fac-minus]').forEach(btn=>{
+        const k=btn.dataset.facMinus;
+        btn.addEventListener('click',()=>{
+          const snap={...g};const delta=(g[k]-origG[k])/5;const{decreased}=getStats();
+          if(delta>0){if(g[k]-5>=HARD_MIN)g[k]-=5;}
+          else{if(decreased+1<=maxMoves&&g[k]-5>=HARD_MIN)g[k]-=5;}
+          if(g[k]!==snap[k])_fateSfxCheck(snap,g,isOOR);
+          render();
+        });
+      });
+      el.querySelectorAll('[data-fac-plus]').forEach(btn=>{
+        const k=btn.dataset.facPlus;
+        btn.addEventListener('click',()=>{
+          const snap={...g};const delta=(g[k]-origG[k])/5;const{increased}=getStats();
+          if(delta<0){if(HARD_MAX[k]===Infinity||g[k]+5<=HARD_MAX[k])g[k]+=5;}
+          else{if(increased+1<=maxMoves&&(HARD_MAX[k]===Infinity||g[k]+5<=HARD_MAX[k]))g[k]+=5;}
+          if(g[k]!==snap[k])_fateSfxCheck(snap,g,isOOR);
+          render();
+        });
+      });
+      el.querySelector('#fatePanelReset')?.addEventListener('click',()=>{Object.assign(g,origG);render();});
+      const cb=el.querySelector('#fatePanelConfirm');
+      if(cb)cb.addEventListener('click',()=>{if(!balanced||!FB.roomId)return;this._confirmFateModify(char,idx,origG,{...g});});
+    };
+    render();
+  },
+
+  async _confirmFateModify(char,idx,origG,finalG){
+    if(this._fateSelected)return;
+    if(FB.roomId){
+      try{
+        const hostSnap=await FB.db.ref(`rooms/${FB.roomId}/host`).once('value');
+        const hostId=hostSnap.val()?.playerId;
+        if(!hostId){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+        const hbSnap=await FB.db.ref(`rooms/${FB.roomId}/heartbeats/${hostId}/lastSeen`).once('value');
+        const lastSeen=hbSnap.val();
+        if(!lastSeen||Date.now()-lastSeen>5*60*1000){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+      }catch(e){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+    }
+    this._fateSelected=true;
+    const ALLATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'];
+    ALLATTRS.forEach(k=>{char.coc[k]=finalG[k];});
+    this._applyDerivedAttrs(char.coc);
+    this.save();
+    const changes=['STR','CON','SIZ','DEX','APP','INT','POW','EDU'].filter(k=>finalG[k]!==origG[k]).map(k=>`${k} ${origG[k]}→${finalG[k]}`);
+    const _nc={STR:15,CON:15,SIZ:40,DEX:15,APP:15,INT:40,POW:15,EDU:40};const _xc={STR:99,CON:99,SIZ:Infinity,DEX:99,APP:99,INT:99,POW:Infinity,EDU:99};
+    const _modOor=['STR','CON','SIZ','DEX','APP','INT','POW','EDU'].filter(k=>finalG[k]<_nc[k]||finalG[k]>_xc[k]);
+    const _modOorLine=_modOor.length?'⚠ 特殊：'+_modOor.map(k=>`${k} ${finalG[k]}`).join(', '):'';
+    S.pushHist({ts:Date.now(),label:'天命改选定',
+      dice:[`选定第${idx+1}组 ｜总${this._fateTotal(origG)}`,changes.length?`调整：${changes.join(', ')}`:'未调整',...(_modOorLine?[_modOorLine]:[])],
+      total:0,charId:char.id,charName:char.name});
+    this.renderCharTab();
+    setTimeout(()=>{
+      const area=document.getElementById('charCardArea');if(!area)return;
+      area.querySelectorAll('[data-coc]').forEach(inp=>{
+        if(ALLATTRS.includes(inp.dataset.coc)){inp.classList.add('fate-attr-glow');inp.addEventListener('animationend',()=>inp.classList.remove('fate-attr-glow'),{once:true});}
+      });
+    },50);
+    setTimeout(()=>document.getElementById('fateModal').classList.remove('show'),600);
+  },
+
+  /* ---- 天命购 FLOW ---- */
+  _doFateBuyRoll(char){
+    this._fateLCK=this._fateRoll3d6x5();
+    this._fateBuyDice=[
+      Array.from({length:21},()=>Math.ceil(Math.random()*6)),
+      Array.from({length:21},()=>Math.ceil(Math.random()*6)),
+    ];
+    const n=parseInt(document.getElementById('fateCntNum').textContent)||3;
+    this._fateBuyCntN=n;
+    this._fateBuyGuaranteeTotal=Math.min(440+5*Math.ceil(n/2),460);
+    this._fateSelected=false;
+    if(FB.roomId&&!FB.isKP)FB._fateUsedThisSession=true;
+    const _canReroll=!FB.roomId||FB.isKP;
+    this._lockFateRuleArea('天命购',`2 组 · 幸运 ${this._fateLCK}`);
+    document.getElementById('fateCtrlZone').style.display='none';
+    document.getElementById('fateRollCount').textContent='已投掷 2 组';
+    if(_canReroll){
+      document.getElementById('fateRerollBar').style.display='flex';
+      document.getElementById('fateBtnReroll').onclick=()=>this._resetFateModal();
+    }
+    const totals=this._fateBuyDice.map(d=>(d.reduce((a,b)=>a+b,0)+18)*5);
+    S.pushHist({ts:Date.now(),label:'天命购投掷',
+      dice:[`LCK ${this._fateLCK}`,`第1组 总${totals[0]}`,`第2组 总${totals[1]}`,`保底 ${this._fateBuyGuaranteeTotal}`],
+      total:0,charId:char.id,charName:char.name});
+    this._renderFateBuyGroups(char);
+  },
+
+  _renderFateBuyGroups(char){
+    const el=document.getElementById('fateResults');if(!el)return;
+    const totals=this._fateBuyDice.map(d=>(d.reduce((a,b)=>a+b,0)+18)*5);
+    const gTotal=this._fateBuyGuaranteeTotal;
+    const maxTotal=Math.max(...totals,gTotal);
+    const inRoom=!!FB.roomId;
+    const lckHtml=`<div class="fate-buy-lck">幸运 LCK<span class="fate-buy-lck-val">${this._fateLCK}</span></div>`;
+    const cardsHtml=this._fateBuyDice.map((dice,i)=>{
+      const total=totals[i];
+      const bestBadge=total===maxTotal?`<span class="fate-buy-badge">最优</span>`:'';
+      const btnHtml=inRoom?`<button class="btn primary" style="width:100%;margin-top:7px" data-fbuy-select="${i}">选定此组</button>`:`<button class="btn-tertiary" disabled style="width:100%;margin-top:7px;opacity:.45;cursor:not-allowed">选定此组</button>`;
+      return`<div class="fate-buy-card" data-fate-buy-idx="${i}">
+        <div class="fate-buy-card-hdr">
+          <span class="fate-buy-total">第${i+1}组 · 总点数 ${total}</span>
+          ${bestBadge}
+          <span class="fate-buy-expand-btn" data-fbuy-expand="${i}">展开明细</span>
+        </div>
+        <div class="fate-buy-dice-detail">D6 明细：${dice.join(' · ')}</div>
+        ${btnHtml}
+      </div>`;
+    }).join('');
+    const gBestBadge=gTotal===maxTotal?`<span class="fate-buy-badge">最优</span>`:'';
+    const gBtnHtml=inRoom?`<button class="btn primary" style="width:100%;margin-top:7px" data-fbuy-select="-1">选定保底</button>`:`<button class="btn-tertiary" disabled style="width:100%;margin-top:7px;opacity:.45;cursor:not-allowed">选定保底</button>`;
+    const guaranteeCard=`<div class="fate-buy-card guarantee" data-fate-buy-idx="-1">
+      <div class="fate-buy-card-hdr">
+        <span class="fate-buy-total">保底 · 总点数 ${gTotal}</span>
+        ${gBestBadge}
+      </div>
+      ${gBtnHtml}
+    </div>`;
+    el.innerHTML=lckHtml+`<div class="fate-buy-cards">${cardsHtml}${guaranteeCard}</div>`;
+    el.querySelectorAll('[data-fbuy-expand]').forEach(btn=>{
+      btn.onclick=()=>{
+        const card=el.querySelector(`[data-fate-buy-idx="${btn.dataset.fbuyExpand}"]`);
+        if(card){card.classList.toggle('expanded');btn.textContent=card.classList.contains('expanded')?'折叠明细':'展开明细';}
+      };
+    });
+    el.querySelectorAll('[data-fbuy-select]').forEach(btn=>{
+      btn.addEventListener('click',()=>this._openFateBuyPanel(char,parseInt(btn.dataset.fbuySelect)));
+    });
+  },
+
+  _openFateBuyPanel(char,idx){
+    const HARD_MIN=5;
+    const HARD_MAX={STR:150,CON:150,SIZ:Infinity,DEX:150,APP:150,INT:150,POW:Infinity,EDU:150};
+    const NORM_FLOOR={STR:15,CON:15,SIZ:40,DEX:15,APP:15,INT:40,POW:15,EDU:40};
+    const NORM_CAP={STR:99,CON:99,SIZ:Infinity,DEX:99,APP:99,INT:99,POW:Infinity,EDU:99};
+    const isOOR=(k,v)=>v<NORM_FLOOR[k]||v>NORM_CAP[k];
+    const totalPoints=idx<0?this._fateBuyGuaranteeTotal:(this._fateBuyDice[idx].reduce((a,b)=>a+b,0)+18)*5;
+    const sourceLabel=idx<0?'保底':`第${idx+1}组`;
+    const ATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU'];
+    const g={};ATTRS.forEach(k=>g[k]=NORM_FLOOR[k]);
+    const getRemaining=()=>totalPoints-ATTRS.reduce((s,k)=>s+g[k],0);
+    const getDerived=()=>{
+      const hp=Math.floor((g.CON+g.SIZ)/10),mp=Math.floor(g.POW/5),san=g.POW;
+      const s=g.STR+g.SIZ;let db,build;
+      if(s<=64){db='-2';build=-2;}else if(s<=84){db='-1';build=-1;}else if(s<=124){db='0';build=0;}else if(s<=164){db='+1D4';build=1;}else if(s<=204){db='+1D6';build=2;}else if(s<=284){db='+2D6';build=3;}else if(s<=364){db='+3D6';build=4;}else{db='+4D6';build=5;}
+      return{hp,mp,san,db,build};
+    };
+    const el=document.getElementById('fateResults');
+    const quickUpdate=()=>{
+      if(!el)return;
+      const rem=getRemaining();
+      ATTRS.forEach(k=>{
+        const vEl=el.querySelector(`[data-fac-val="${k}"]`);
+        if(vEl&&vEl.tagName!=='INPUT'){
+          vEl.textContent=g[k];
+          const{cls,style}=attrTier(g[k]);
+          vEl.className='fac-val'+(cls?' '+cls:'');
+          vEl.style.cssText=style||'';
+        }
+        const mb=el.querySelector(`[data-fac-minus="${k}"]`);if(mb)mb.disabled=g[k]-5<HARD_MIN;
+        const pb=el.querySelector(`[data-fac-plus="${k}"]`);if(pb)pb.disabled=rem<5||(HARD_MAX[k]!==Infinity&&g[k]+5>HARD_MAX[k]);
+        const cell=el.querySelector(`[data-fac-cell="${k}"]`);
+        if(cell){
+          cell.classList.toggle('out-range',isOOR(k,g[k]));
+          const badge=cell.querySelector('.fate-oor-badge');
+          if(badge)badge.style.display=isOOR(k,g[k])?'flex':'none';
+        }
+      });
+      const rn=el.querySelector('.fate-buy-rem-num');if(rn){rn.textContent=rem;rn.classList.toggle('done',rem===0);}
+      const bf=el.querySelector('.fate-alloc-bar-fill');
+      if(bf){const p=totalPoints>0?Math.min(100,(totalPoints-rem)/totalPoints*100):0;bf.style.width=p+'%';bf.classList.toggle('done',rem===0);}
+      const dt=el.querySelector('.fate-alloc-detail');if(dt)dt.textContent=`已分配 ${totalPoints-rem} / ${totalPoints}`;
+      const oorCount=ATTRS.filter(k=>isOOR(k,g[k])).length;
+      const on=el.querySelector('.fate-oor-note');if(on)on.textContent=oorCount?`含 ${oorCount} 项特殊属性`:'';
+      const cb=el.querySelector('#fatePanelConfirm');if(cb)cb.disabled=rem!==0||!FB.roomId;
+      const d=getDerived();const dvs=el.querySelectorAll('.fate-derived-val');
+      if(dvs.length>=5){dvs[0].textContent=d.hp;dvs[1].textContent=d.mp;dvs[2].textContent=d.san;dvs[3].textContent=d.db;dvs[4].textContent=d.build>=0?'+'+d.build:String(d.build);}
+    };
+    let prevDer=null;
+    const render=()=>{
+      if(!el)return;
+      const rem=getRemaining();
+      const pct=totalPoints>0?Math.min(100,(totalPoints-rem)/totalPoints*100):0;
+      const d=getDerived();
+      const dbFl=prevDer&&prevDer.db!==d.db,buFl=prevDer&&prevDer.build!==d.build;
+      prevDer={...d};
+      const hdr=`<div class="fate-panel-hdr"><div class="fate-panel-chips"><span class="fate-adj-badge">天命购 · ${sourceLabel}</span><span class="fate-panel-chip-dim">总点数 ${totalPoints}</span></div><button class="fate-panel-back" id="fatePanelBack">← 重选组</button></div>`;
+      const status=`<div class="fate-buy-status-wrap"><div class="fate-buy-rem-row"><span class="fate-buy-rem-num${rem===0?' done':''}">${rem}</span><span class="fate-buy-rem-lbl">剩余可分配</span></div><div class="fate-alloc-bar"><div class="fate-alloc-bar-fill${rem===0?' done':''}" style="width:${pct}%"></div></div><div class="fate-alloc-detail">已分配 ${totalPoints-rem} / ${totalPoints}</div></div>`;
+      const oorCount=ATTRS.filter(k=>isOOR(k,g[k])).length;
+      const cells=ATTRS.map(k=>{
+        const oor=isOOR(k,g[k]);
+        const{cls,style}=attrTier(g[k]);
+        const canM=g[k]-5>=HARD_MIN,canP=rem>=5&&(HARD_MAX[k]===Infinity||g[k]+5<=HARD_MAX[k]);
+        const oorBadge=oor?'<span class="fate-oor-badge" title="超出常规范围，需与 KP 协商">!</span>':'';
+        return`<div class="fate-attr-cell${oor?' out-range':''}" data-fac-cell="${k}">${oorBadge}<div class="fac-name">${k}</div><div class="fac-val${cls?' '+cls:''}"${style?` style="${style}"`:''} data-fac-val="${k}">${g[k]}</div><div class="fac-delta"></div><div class="fac-btns"><button class="fac-btn" data-fac-minus="${k}"${canM?'':' disabled'}>−</button><button class="fac-btn" data-fac-plus="${k}"${canP?'':' disabled'}>+</button></div></div>`;
+      }).join('');
+      const lck=`<div class="fate-panel-lck"><span class="fac-name">LCK</span><span class="fate-panel-lck-val">${this._fateLCK}</span><span style="font-size:10px">只读</span></div>`;
+      const bld=d.build>=0?'+'+d.build:String(d.build);
+      const derived=`<div class="fate-derived-bar"><div class="fate-derived-item"><div class="fate-derived-lbl">HP</div><div class="fate-derived-val">${d.hp}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">MP</div><div class="fate-derived-val">${d.mp}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">SAN</div><div class="fate-derived-val">${d.san}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">DB</div><div class="fate-derived-val${dbFl?' fate-derived-flash':''}">${d.db}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">体格</div><div class="fate-derived-val${buFl?' fate-derived-flash':''}">${bld}</div></div><div class="fate-derived-item"><div class="fate-derived-lbl">幸运</div><div class="fate-derived-val">${this._fateLCK}</div></div></div>`;
+      const canConfirm=rem===0&&!!FB.roomId;
+      const oorNote=oorCount?`<div class="fate-oor-note">含 ${oorCount} 项特殊属性</div>`:'';
+      const actions=`${oorNote}<div class="fate-adj-actions"><button class="btn-tertiary" id="fatePanelAvg">平均分配</button><button class="btn-tertiary" id="fatePanelReset">重置</button><button class="btn primary" id="fatePanelConfirm"${canConfirm?'':' disabled'}>确认属性 ▶</button></div>`;
+      el.innerHTML=hdr+status+`<div class="fate-attr-grid-4x2">${cells}</div>`+lck+derived+actions;
+      el.querySelector('#fatePanelBack')?.addEventListener('click',()=>this._renderFateBuyGroups(char));
+      const bindLP=(btn,onPress,getVal)=>{
+        let timer=null,interval=null,active=false;
+        const stopLP=()=>{if(!active)return;active=false;clearTimeout(timer);clearInterval(interval);timer=null;interval=null;document.removeEventListener('mouseup',stopLP);document.removeEventListener('touchend',stopLP);render();};
+        const startLP=e=>{
+          if(btn.disabled)return;e.preventDefault();
+          const snap={...g};
+          if(!onPress())return;
+          active=true;_fateSfxCheck(snap,g,isOOR);quickUpdate();
+          timer=setTimeout(()=>{interval=setInterval(()=>{if(!active){stopLP();return;}const snap2={...g};if(!onPress()){stopLP();return;}if(getVal)SFX.tick(getVal());_fateSfxCheck(snap2,g,isOOR);quickUpdate();},100);},400);
+          document.addEventListener('mouseup',stopLP,{once:true});
+          document.addEventListener('touchend',stopLP,{once:true});
+        };
+        btn.addEventListener('mousedown',startLP);
+        btn.addEventListener('touchstart',startLP,{passive:false});
+        btn.addEventListener('mouseleave',()=>{if(active)stopLP();});
+      };
+      el.querySelectorAll('[data-fac-minus]').forEach(btn=>{
+        const k=btn.dataset.facMinus;
+        bindLP(btn,()=>{if(g[k]-5<HARD_MIN)return false;g[k]-=5;return true;},()=>g[k]);
+      });
+      el.querySelectorAll('[data-fac-plus]').forEach(btn=>{
+        const k=btn.dataset.facPlus;
+        bindLP(btn,()=>{const r=getRemaining();if(r<5||(HARD_MAX[k]!==Infinity&&g[k]+5>HARD_MAX[k]))return false;g[k]+=5;return true;},()=>g[k]);
+      });
+      el.querySelectorAll('[data-fac-val]').forEach(valEl=>{
+        valEl.addEventListener('click',()=>{
+          const k=valEl.dataset.facVal;
+          const inp=document.createElement('input');
+          inp.type='number';inp.value=g[k];
+          inp.style.cssText='width:40px;font-size:18px;font-family:var(--font-num);font-weight:700;text-align:center;background:rgba(255,255,255,.1);border:1px solid var(--gold);border-radius:4px;color:var(--text);padding:1px 2px;outline:none';
+          valEl.replaceWith(inp);inp.focus();inp.select();
+          const commit=()=>{
+            let v=parseInt(inp.value);if(isNaN(v))v=g[k];
+            v=Math.round(v/5)*5;
+            const hardMax=HARD_MAX[k]===Infinity?99999:HARD_MAX[k];v=Math.max(HARD_MIN,Math.min(hardMax,v));
+            const maxForK=totalPoints-ATTRS.filter(kk=>kk!==k).reduce((s,kk)=>s+g[kk],0);
+            v=Math.min(v,Math.floor(maxForK/5)*5);v=Math.max(HARD_MIN,v);
+            g[k]=v;render();
+          };
+          inp.addEventListener('blur',commit,{once:true});
+          inp.addEventListener('keydown',e=>{
+            if(e.key==='Enter'){inp.removeEventListener('blur',commit);commit();}
+            if(e.key==='Escape'){inp.removeEventListener('blur',commit);render();}
+          });
+        });
+      });
+      const normFloorSum=ATTRS.reduce((s,k)=>s+NORM_FLOOR[k],0);
+      el.querySelector('#fatePanelAvg')?.addEventListener('click',()=>{
+        ATTRS.forEach(k=>g[k]=NORM_FLOOR[k]);
+        let r=totalPoints-normFloorSum,i=0,safety=0;
+        while(r>=5&&safety<10000){safety++;const k=ATTRS[i%ATTRS.length];if(HARD_MAX[k]===Infinity||g[k]+5<=HARD_MAX[k]){g[k]+=5;r-=5;}i++;if(i%ATTRS.length===0&&!ATTRS.some(k2=>r>=5&&(HARD_MAX[k2]===Infinity||g[k2]+5<=HARD_MAX[k2])))break;}
+        render();
+      });
+      el.querySelector('#fatePanelReset')?.addEventListener('click',()=>{ATTRS.forEach(k=>g[k]=NORM_FLOOR[k]);render();});
+      const confirmBtn=el.querySelector('#fatePanelConfirm');
+      if(confirmBtn)confirmBtn.addEventListener('click',()=>{if(getRemaining()!==0||!FB.roomId)return;this._confirmFateBuy(char,idx,{...g,LCK:this._fateLCK});});
+    };
+    render();
+  },
+
+  async _confirmFateBuy(char,idx,allocatedG){
+    if(this._fateSelected)return;
+    if(FB.roomId){
+      try{
+        const hostSnap=await FB.db.ref(`rooms/${FB.roomId}/host`).once('value');
+        const hostId=hostSnap.val()?.playerId;
+        if(!hostId){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+        const hbSnap=await FB.db.ref(`rooms/${FB.roomId}/heartbeats/${hostId}/lastSeen`).once('value');
+        const lastSeen=hbSnap.val();
+        if(!lastSeen||Date.now()-lastSeen>5*60*1000){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+      }catch(e){FB._toast('KP 当前不在线，请等待 KP 回来后再选定','warn');return;}
+    }
+    this._fateSelected=true;
+    const ALLATTRS=['STR','CON','SIZ','DEX','APP','INT','POW','EDU','LCK'];
+    ALLATTRS.forEach(k=>{char.coc[k]=allocatedG[k];});
+    this._applyDerivedAttrs(char.coc);
+    this.save();
+    const groupTotal=idx<0?this._fateBuyGuaranteeTotal:(this._fateBuyDice[idx].reduce((a,b)=>a+b,0)+18)*5;
+    const groupLabel=idx<0?'选定保底':`选定第${idx+1}组`;
+    const _bn={STR:15,CON:15,SIZ:40,DEX:15,APP:15,INT:40,POW:15,EDU:40};const _bx={STR:99,CON:99,SIZ:Infinity,DEX:99,APP:99,INT:99,POW:Infinity,EDU:99};
+    const _buyOor=['STR','CON','SIZ','DEX','APP','INT','POW','EDU'].filter(k=>allocatedG[k]<_bn[k]||allocatedG[k]>_bx[k]);
+    const _buyOorLine=_buyOor.length?'⚠ 特殊：'+_buyOor.map(k=>`${k} ${allocatedG[k]}`).join(', '):'';
+    S.pushHist({ts:Date.now(),label:'天命购选定',
+      dice:[`${groupLabel} 总${groupTotal}`,`分配：STR${allocatedG.STR} CON${allocatedG.CON} SIZ${allocatedG.SIZ} DEX${allocatedG.DEX} APP${allocatedG.APP} INT${allocatedG.INT} POW${allocatedG.POW} EDU${allocatedG.EDU} LCK${allocatedG.LCK}`,...(_buyOorLine?[_buyOorLine]:[])],
+      total:0,charId:char.id,charName:char.name});
+    this.renderCharTab();
+    setTimeout(()=>{
+      const area=document.getElementById('charCardArea');if(!area)return;
+      area.querySelectorAll('[data-coc]').forEach(inp=>{
+        if(ALLATTRS.includes(inp.dataset.coc)){inp.classList.add('fate-attr-glow');inp.addEventListener('animationend',()=>inp.classList.remove('fate-attr-glow'),{once:true});}
+      });
+    },50);
+    // AI analysis after confirm (room only, single non-blocking call)
+    if(FB.roomId){
+      const g=Object.assign({},allocatedG);
+      const aiZone=document.createElement('div');aiZone.className='fate-ai-zone';
+      const fakeCard={querySelector:()=>aiZone};
+      this._fateAnalyzeGroup(g,fakeCard).then(()=>{
+        const t=(aiZone.textContent||'').trim().replace(/\s+/g,' ').slice(0,80);
+        if(t)FB._toast('天命购 AI：'+t,'success');
+      }).catch(()=>{});
+    }
+    setTimeout(()=>document.getElementById('fateModal').classList.remove('show'),600);
+  },
+
   _renderFateGroups(char){
     const el=document.getElementById('fateResults');if(!el)return;
     const totals=this._fateGroups.map(g=>this._fateTotal(g));
@@ -5138,9 +5939,8 @@ const App={
       const bestBadge=t===maxTotal?`<span class="fate-badge-best">最高</span>`:'';
       const noLckHtml=`<span class="fate-total-nolck">｜ 除LCK ${noLck}</span>`;
       const attrsHtml=attrs.map(k=>{
-        const col=this._fateAttrColor(g[k]);
-        const style=col?` style="color:${col}"`:'';
-        return`<span class="fate-attr-item"><span class="fate-attr-name">${k}</span> <span class="fate-attr-val"${style}>${g[k]}</span></span>`;
+        const{cls,style}=attrTier(g[k]);
+        return`<span class="fate-attr-item"><span class="fate-attr-name">${k}</span><span class="fate-attr-val${cls?' '+cls:''}"${style?` style="${style}"`:''} >${g[k]}</span></span>`;
       }).join('');
       const btnHtml=inRoom
         ?`<button class="btn primary fate-select-btn" data-fate-select="${i}">选定此组</button>`
@@ -7646,10 +8446,12 @@ const KP={
     const attrGrid=attrRows.map(row=>row.map(([k,v,isDerived])=>{
       const cellCls='kp-mid-attr-cell'+(isDerived?' derived':'');
       if(!isDerived&&!isPlayer){
-        return`<div class="${cellCls}"><div class="kp-mid-attr-k">${k}</div><input type="number" class="kp-mid-attr-inp" data-mid-attr="${k}" value="${v}" min="1" max="100"></div>`;
+        const{cls:tc,style:ts}=attrTier(v);const is=tc?'color:var(--gold-bright)':ts;
+        return`<div class="${cellCls}"><div class="kp-mid-attr-k">${k}</div><input type="number" class="kp-mid-attr-inp" data-mid-attr="${k}" value="${v}" min="1" max="100"${is?` style="${is}"`:''} ></div>`;
       }
       const idAttr=isDerived?` id="${derIdMap[k]}"`:` id="kpMidAv${k}"`;
-      return`<div class="${cellCls}"><div class="kp-mid-attr-k">${k}</div><div class="kp-mid-attr-v${isDerived?' derived':''}"${idAttr}>${v}</div></div>`;
+      const{cls:tierCls,style:tierStyle}=(!isDerived)?attrTier(v):{cls:'',style:''};
+      return`<div class="${cellCls}"><div class="kp-mid-attr-k">${k}</div><div class="kp-mid-attr-v${isDerived?' derived':''}${tierCls?' '+tierCls:''}"${tierStyle?` style="${tierStyle}"`:''} ${idAttr}>${v}</div></div>`;
     }).join('')).join('');
     // Skills
     const skills=c.skills||[];
@@ -7704,9 +8506,10 @@ const KP={
         const ddg=document.getElementById('kpMidDerDodge');if(ddg)ddg.textContent=ex2.dodge;
         this._saveNpcChar(id,char);
       };
+      const updateAttrColor=inp=>{const v=parseInt(inp.value)||0;const{cls,style}=attrTier(v);inp.style.color=cls?'var(--gold-bright)':style?style.replace(/^color:/,''):'';};
       upper.querySelectorAll('[data-mid-attr]').forEach(inp=>{
-        inp.addEventListener('change',()=>{c[inp.dataset.midAttr]=parseInt(inp.value)||0;updateDerived();});
-        inp.addEventListener('wheel',e=>{e.preventDefault();inp.value=(parseInt(inp.value)||0)+(e.deltaY<0?1:-1);c[inp.dataset.midAttr]=parseInt(inp.value)||0;updateDerived();},{passive:false});
+        inp.addEventListener('change',()=>{c[inp.dataset.midAttr]=parseInt(inp.value)||0;updateAttrColor(inp);updateDerived();});
+        inp.addEventListener('wheel',e=>{e.preventDefault();inp.value=(parseInt(inp.value)||0)+(e.deltaY<0?1:-1);c[inp.dataset.midAttr]=parseInt(inp.value)||0;updateAttrColor(inp);updateDerived();},{passive:false});
       });
       upper.querySelectorAll('[data-mid-sk-del]').forEach(btn=>{
         btn.addEventListener('click',()=>{c.skills.splice(parseInt(btn.dataset.midSkDel),1);this._saveNpcChar(id,char);this._renderDetailPane();});
